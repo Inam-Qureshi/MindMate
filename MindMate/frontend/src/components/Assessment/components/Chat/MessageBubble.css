@@ -1,0 +1,175 @@
+/* Message Bubble Styles - ChatGPT-like */
+.message-bubble {
+  display: flex;
+  padding: 1.5rem 0;
+  margin: 0;
+  width: 100%;
+}
+
+.message-bubble.user {
+  justify-content: flex-end; /* User messages on the right */
+  background: transparent;
+}
+
+.message-bubble.assistant {
+  justify-content: flex-start; /* MindMate messages on the left */
+  background: transparent;
+}
+
+.message-bubble.dark.user {
+  background: transparent;
+}
+
+.message-bubble.dark.assistant {
+  background: #444654;
+}
+
+.message-bubble-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 85%; /* Limit width for better readability */
+  padding: 0 1rem;
+}
+
+/* User messages - right aligned */
+.message-bubble.user .message-bubble-content {
+  flex-direction: row-reverse; /* Avatar on right, text on left */
+  margin-left: auto; /* Push to right */
+  margin-right: 0;
+  justify-content: flex-start; /* Content starts from right */
+}
+
+/* Assistant messages - left aligned */
+.message-bubble.assistant .message-bubble-content {
+  flex-direction: row; /* Avatar on left, text on right */
+  margin-left: 0;
+  margin-right: auto; /* Push to left */
+  justify-content: flex-start; /* Content starts from left */
+}
+
+.message-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.message-bubble.user .message-avatar {
+  background: #19c37d;
+  color: white;
+}
+
+.message-bubble.assistant .message-avatar {
+  background: #ab68ff;
+  color: white;
+}
+
+.message-bubble.dark.user .message-avatar {
+  background: #19c37d;
+}
+
+.message-bubble.dark.assistant .message-avatar {
+  background: #ab68ff;
+}
+
+.message-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.message-text {
+  padding: 0;
+  border-radius: 0;
+  font-size: 1rem;
+  line-height: 1.75;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+.message-bubble.user .message-text {
+  background: transparent;
+  color: #1f2937;
+  text-align: left; /* Text aligned left even though bubble is on right */
+}
+
+.message-bubble.dark.user .message-text {
+  color: #ececf1;
+}
+
+.message-bubble.assistant .message-text {
+  background: transparent;
+  color: #353740;
+  border: none;
+  text-align: left; /* Text aligned left for assistant */
+}
+
+.message-bubble.dark.assistant .message-text {
+  background: transparent;
+  color: #ececf1;
+  border: none;
+}
+
+.message-timestamp {
+  display: none; /* Hide timestamp for cleaner ChatGPT-like look */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .message-bubble {
+    padding: 1rem 0; /* Reduced padding on mobile */
+  }
+  
+  .message-bubble-content {
+    max-width: 90%; /* Wider on mobile */
+    padding: 0 0.75rem; /* Reduced padding */
+    gap: 0.625rem; /* Smaller gap */
+  }
+  
+  .message-avatar {
+    width: 28px; /* Slightly smaller on mobile */
+    height: 28px;
+  }
+  
+  .message-text {
+    font-size: 0.9375rem; /* Slightly smaller font */
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .message-bubble {
+    padding: 0.875rem 0;
+  }
+  
+  .message-bubble-content {
+    max-width: 95%; /* Even wider on small mobile */
+    padding: 0 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  .message-avatar {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .avatar-text {
+    font-size: 0.625rem;
+  }
+  
+  .message-text {
+    font-size: 0.875rem;
+  }
+}
+

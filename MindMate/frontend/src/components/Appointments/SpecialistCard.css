@@ -1,0 +1,370 @@
+/* Specialist Card - Clean MARHAM Style */
+
+.specialist-card-marham {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: 80px 1fr 200px;
+  gap: 1.5rem;
+  align-items: start;
+  position: relative;
+}
+
+.specialist-card-marham:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.specialist-card-marham.dark {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+/* Avatar - Column 1 */
+.card-avatar-container {
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-circle-large {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+  overflow: hidden;
+}
+
+.avatar-circle-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  color: white;
+  font-weight: 600;
+}
+
+/* Profile Info - Column 2 */
+.card-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.specialist-full-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.specialist-card-marham.dark .specialist-full-name {
+  color: #f9fafb;
+}
+
+.specialist-specialization {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.specialist-card-marham.dark .specialist-specialization {
+  color: #9ca3af;
+}
+
+.qualifications {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.specialist-card-marham.dark .qualifications {
+  color: #9ca3af;
+}
+
+.card-stats-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.specialist-card-marham.dark .stat-label {
+  color: #9ca3af;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.specialist-card-marham.dark .stat-value {
+  color: #f9fafb;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.specialization-tag {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid #bfdbfe;
+}
+
+.specialist-card-marham.dark .specialization-tag {
+  background: #1e3a8a;
+  color: #93c5fd;
+  border-color: #3b82f6;
+}
+
+/* Action Buttons Section - Column 3 */
+.card-right-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Ensure right column layout styles apply even if container class differs */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 200px;
+  flex-shrink: 0;
+}
+
+/* Ensure action buttons have identical dimensions */
+.action-buttons .btn-book-appointment,
+.action-buttons .btn-view-profile {
+  width: 100%;
+  min-height: 44px;
+}
+
+.btn-book-appointment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-book-appointment:hover {
+  background: #059669;
+}
+
+.btn-book-appointment:focus-visible,
+.btn-view-profile:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+
+.btn-view-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  background: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-profile:hover {
+  background: #1e3a8a;
+}
+
+.booking-cards-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.booking-card {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  min-height: 88px;
+}
+
+.booking-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.video-card {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.clinic-card {
+  background: white;
+  border-color: #e5e7eb;
+}
+
+.booking-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.375rem;
+}
+
+.booking-type {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.specialist-card-marham.dark .booking-type {
+  color: #f9fafb;
+}
+
+.fast-confirm-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.375rem;
+  background: #10b981;
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.booking-availability {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.booking-fee {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.specialist-card-marham.dark .booking-fee {
+  color: #f9fafb;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .specialist-card-marham {
+    grid-template-columns: 1fr;
+  }
+  
+  .card-right-section {
+    width: 100%;
+  }
+
+  .action-buttons {
+    flex-direction: row;
+  }
+
+  .btn-book-appointment,
+  .btn-view-profile {
+    flex: 1;
+  }
+
+  .booking-cards-container {
+    flex-direction: column;
+  }
+
+  .booking-card {
+    flex: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .specialist-card-marham {
+    padding: 1.25rem;
+  }
+
+  .avatar-circle-large {
+    width: 56px;
+    height: 56px;
+  }
+
+  .specialist-full-name {
+    font-size: 0.9375rem;
+  }
+
+  .card-stats-row {
+    gap: 1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .booking-cards-container {
+    flex-direction: column;
+  }
+
+  .specialization-tag {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+  }
+}

@@ -1,0 +1,1184 @@
+/* Specialist Profile Page Styles - Based on Reference Design */
+
+.specialist-profile-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+/* Loading and Error States */
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Header Section */
+.profile-header-section {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 0;
+  margin-top: 64px; /* Add top margin to account for fixed global header */
+}
+
+.profile-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.specialist-info-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.specialist-avatar {
+  flex-shrink: 0;
+}
+
+.specialist-avatar img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #10b981;
+}
+
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  font-weight: 600;
+  border: 2px solid #10b981;
+}
+
+.specialist-details {
+  flex: 1;
+}
+
+.specialist-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.specialist-title {
+  font-size: 18px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.qualifications {
+  font-size: 16px;
+  color: #374151;
+  margin: 0 0 12px 0;
+  font-weight: 500;
+}
+
+.experience-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.consultant-badge {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.experience-years {
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.share-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.share-profile-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.consultation-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-consult-online {
+  background: #1e40af;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-consult-online:hover {
+  background: #1d4ed8;
+}
+
+.btn-visit-clinic {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-visit-clinic:hover {
+  background: #059669;
+}
+
+/* Main Content Layout */
+.profile-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+/* Left Column */
+.profile-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Reviews Section */
+.reviews-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.reviews-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.overall-rating {
+  text-align: right;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.rating-stars .star {
+  color: #fbbf24;
+}
+
+.rating-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.performance-metrics {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.satisfaction-bars {
+  margin-bottom: 24px;
+}
+
+.satisfaction-item {
+  margin-bottom: 16px;
+}
+
+.satisfaction-label {
+  display: block;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.progress-bar {
+  position: relative;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #10b981;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  right: 8px;
+  top: -20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.reviews-list {
+  margin-bottom: 24px;
+}
+
+.review-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-left: 4px solid #10b981;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.reviewer-initial {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-date {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.review-satisfaction {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.review-text {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.review-tag {
+  background: #10b981;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.consultation-type {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.reviews-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-view-all-reviews, .btn-post-review {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-all-reviews {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.btn-view-all-reviews:hover {
+  background: #f9fafb;
+}
+
+.btn-post-review {
+  background: #10b981;
+  color: white;
+  border: none;
+}
+
+.btn-post-review:hover {
+  background: #059669;
+}
+
+/* Practice Details Section */
+.practice-details-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.practice-details-section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 24px 0;
+}
+
+.consultation-mode-card {
+  border: 2px solid #10b981;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.mode-status {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mode-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.consultation-mode-card h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+}
+
+.timings-table {
+  margin-bottom: 20px;
+}
+
+.timing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.timing-row:last-child {
+  border-bottom: none;
+}
+
+.day {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 40px;
+}
+
+.times {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.btn-video-call {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+
+.btn-video-call:hover {
+  background: #059669;
+}
+
+.help-links {
+  display: flex;
+  gap: 16px;
+}
+
+.help-link {
+  color: #10b981;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.help-link:hover {
+  text-decoration: underline;
+}
+
+/* Right Column - Booking Panel */
+.profile-right-column {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+}
+
+.booking-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.booking-panel h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 24px 0;
+}
+
+.booking-step {
+  margin-bottom: 24px;
+}
+
+.booking-step h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+}
+
+.consultation-option {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.consultation-option:hover {
+  border-color: #10b981;
+}
+
+.consultation-option.selected {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.option-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.option-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.option-availability {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.option-status {
+  font-size: 14px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.datetime-selectors {
+  display: flex;
+  gap: 12px;
+}
+
+.date-selector, .time-selector {
+  flex: 1;
+}
+
+.date-selector select, .time-selector select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.patient-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.country-code {
+  width: 80px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.patient-info-section input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.patient-info-section input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.btn-book-consultation {
+  width: 100%;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-book-consultation:hover {
+  background: #059669;
+}
+
+.btn-book-consultation:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.booking-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .profile-main-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .profile-right-column {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .specialist-info-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .header-actions {
+    align-items: center;
+    width: 100%;
+  }
+  
+  .consultation-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .performance-metrics {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .datetime-selectors {
+    flex-direction: column;
+  }
+  
+  .reviews-actions {
+    flex-direction: column;
+  }
+}
+
+/* Star Rating Styles */
+.star {
+  color: #d1d5db;
+}
+
+.star.filled {
+  color: #fbbf24;
+}
+
+.star.half {
+  color: #fbbf24;
+}
+
+.star.empty {
+  color: #d1d5db;
+}
+
+/* Button Styles */
+.btn-primary {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: #059669;
+}
+
+/* Dark Mode Support */
+.specialist-profile-page.dark {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .profile-header-section,
+.specialist-profile-page.dark .reviews-section,
+.specialist-profile-page.dark .practice-details-section,
+.specialist-profile-page.dark .booking-panel {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.specialist-profile-page.dark .specialist-name,
+.specialist-profile-page.dark .reviews-header h2,
+.specialist-profile-page.dark .practice-details-section h3,
+.specialist-profile-page.dark .booking-panel h3 {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .specialist-title,
+.specialist-profile-page.dark .qualifications,
+.specialist-profile-page.dark .metric-label,
+.specialist-profile-page.dark .rating-text,
+.specialist-profile-page.dark .review-date,
+.specialist-profile-page.dark .review-text,
+.specialist-profile-page.dark .option-availability {
+  color: #d1d5db;
+}
+
+.specialist-profile-page.dark .review-card {
+  background: #374151;
+  border-left-color: #10b981;
+}
+
+.specialist-profile-page.dark .consultation-option {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.specialist-profile-page.dark .consultation-option.selected {
+  background: #064e3b;
+}
+
+.specialist-profile-page.dark .patient-info-section input,
+.specialist-profile-page.dark .date-selector select,
+.specialist-profile-page.dark .time-selector select,
+.specialist-profile-page.dark .country-code {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .profile-header-section {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+
+.specialist-profile-page.dark .specialist-info-header {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .consultation-buttons .btn-consult-online,
+.specialist-profile-page.dark .consultation-buttons .btn-visit-clinic {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+.specialist-profile-page.dark .consultation-buttons .btn-consult-online:hover,
+.specialist-profile-page.dark .consultation-buttons .btn-visit-clinic:hover {
+  background: #4b5563;
+}
+
+.specialist-profile-page.dark .share-profile-btn {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+.specialist-profile-page.dark .share-profile-btn:hover {
+  background: #4b5563;
+}
+
+.specialist-profile-page.dark .consultation-mode-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.specialist-profile-page.dark .consultation-mode-card h4 {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .timing-row {
+  color: #d1d5db;
+}
+
+.specialist-profile-page.dark .btn-video-call {
+  background: #10b981;
+  color: white;
+}
+
+.specialist-profile-page.dark .btn-video-call:hover {
+  background: #059669;
+}
+
+.specialist-profile-page.dark .help-link {
+  color: #3b82f6;
+}
+
+.specialist-profile-page.dark .help-link:hover {
+  color: #2563eb;
+}
+
+.specialist-profile-page.dark .booking-panel {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.specialist-profile-page.dark .booking-panel h3,
+.specialist-profile-page.dark .booking-panel h4 {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .booking-step h4 {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .datetime-selectors select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .patient-info-section input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .patient-info-section input::placeholder {
+  color: #9ca3af;
+}
+
+.specialist-profile-page.dark .btn-book-consultation {
+  background: #10b981;
+  color: white;
+}
+
+.specialist-profile-page.dark .btn-book-consultation:hover {
+  background: #059669;
+}
+
+.specialist-profile-page.dark .btn-book-consultation:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.specialist-profile-page.dark .booking-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.specialist-profile-page.dark .no-reviews p {
+  color: #9ca3af;
+}
+
+.specialist-profile-page.dark .btn-view-all-reviews {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+.specialist-profile-page.dark .btn-view-all-reviews:hover {
+  background: #4b5563;
+}
+
+.specialist-profile-page.dark .header-actions-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.specialist-profile-page.dark .header-actions-section .btn-consult-online {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.specialist-profile-page.dark .header-actions-section .btn-consult-online:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+.specialist-profile-page.dark .header-actions-section .btn-visit-clinic {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.specialist-profile-page.dark .header-actions-section .btn-visit-clinic:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Header Actions Section */
+.header-actions-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.header-actions-section .consultation-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.header-actions-section .btn-consult-online,
+.header-actions-section .btn-visit-clinic {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid transparent;
+}
+
+.header-actions-section .btn-consult-online {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.header-actions-section .btn-consult-online:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.header-actions-section .btn-visit-clinic {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.header-actions-section .btn-visit-clinic:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* New Sections Styles */
+.bio-section,
+.experience-summary-section,
+.mental-health-specialties-section,
+.therapy-methods-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.bio-section h3,
+.experience-summary-section h3,
+.mental-health-specialties-section h3,
+.therapy-methods-section h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bio-content,
+.experience-content {
+  color: #6b7280;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.specialties-list,
+.therapy-methods-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.specialty-item,
+.therapy-method-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.specialty-name,
+.method-name {
+  font-weight: 500;
+}
+
+.specialist-badges {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.verified-badge,
+.specializations-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #10b981;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.specializations-badge {
+  background: #3b82f6;
+}
+
+/* Dark Mode Styles for New Sections */
+.specialist-profile-page.dark .bio-section,
+.specialist-profile-page.dark .experience-summary-section,
+.specialist-profile-page.dark .mental-health-specialties-section,
+.specialist-profile-page.dark .therapy-methods-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.specialist-profile-page.dark .bio-section h3,
+.specialist-profile-page.dark .experience-summary-section h3,
+.specialist-profile-page.dark .mental-health-specialties-section h3,
+.specialist-profile-page.dark .therapy-methods-section h3 {
+  color: #f9fafb;
+}
+
+.specialist-profile-page.dark .bio-content,
+.specialist-profile-page.dark .experience-content {
+  color: #d1d5db;
+}
+
+.specialist-profile-page.dark .specialty-item,
+.specialist-profile-page.dark .therapy-method-item {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+/* Responsive Design for New Sections */
+@media (max-width: 768px) {
+  .specialties-list,
+  .therapy-methods-list {
+    flex-direction: column;
+  }
+  
+  .specialty-item,
+  .therapy-method-item {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .specialist-badges {
+    justify-content: center;
+  }
+}

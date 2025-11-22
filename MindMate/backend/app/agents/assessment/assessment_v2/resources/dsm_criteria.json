@@ -1,0 +1,1238 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "description": "DSM-5 Diagnostic Criteria Bank - Fully Compliant with DSM-5 Standards",
+    "total_disorders": 14,
+    "last_updated": "2025-10-10",
+    "compliance_verified": true
+  },
+  "disorders": {
+    "MDD": {
+      "disorder_id": "MDD",
+      "disorder_name": "Major Depressive Disorder",
+      "category": "mood_disorders",
+      "criteria_type": "symptom_count",
+      "minimum_criteria_count": 5,
+      "duration_requirement": "At least 2 weeks",
+      "clinical_notes": "At least 5 symptoms present during the same 2-week period, representing a change from previous functioning. At least one symptom must be either (1) depressed mood or (2) loss of interest or pleasure.",
+      "criteria": [
+        {
+          "criterion_id": "MDD_A1",
+          "text": "Depressed mood most of the day, nearly every day",
+          "category": "core_mood",
+          "required": false,
+          "note": "Must have either A1 or A2"
+        },
+        {
+          "criterion_id": "MDD_A2",
+          "text": "Markedly diminished interest or pleasure in all, or almost all, activities most of the day, nearly every day",
+          "category": "core_mood",
+          "required": false,
+          "note": "Must have either A1 or A2"
+        },
+        {
+          "criterion_id": "MDD_B1",
+          "text": "Significant weight loss when not dieting or weight gain, or decrease or increase in appetite nearly every day",
+          "category": "neurovegetative",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_B2",
+          "text": "Insomnia or hypersomnia nearly every day",
+          "category": "neurovegetative",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_B3",
+          "text": "Psychomotor agitation or retardation nearly every day (observable by others)",
+          "category": "neurovegetative",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_B4",
+          "text": "Fatigue or loss of energy nearly every day",
+          "category": "neurovegetative",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_C1",
+          "text": "Feelings of worthlessness or excessive or inappropriate guilt nearly every day",
+          "category": "cognitive",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_C2",
+          "text": "Diminished ability to think or concentrate, or indecisiveness, nearly every day",
+          "category": "cognitive",
+          "required": false
+        },
+        {
+          "criterion_id": "MDD_C3",
+          "text": "Recurrent thoughts of death, recurrent suicidal ideation without a specific plan, or a suicide attempt or specific plan for committing suicide",
+          "category": "cognitive",
+          "required": false
+        }
+      ],
+      "exclusion_criteria": [
+        "Not attributable to physiological effects of a substance or another medical condition",
+        "Not better explained by schizophrenia spectrum or other psychotic disorders",
+        "No history of manic or hypomanic episode"
+      ],
+      "severity_levels": {
+        "mild": "Few, if any, symptoms in excess of those required to make the diagnosis, and symptoms result in minor impairment in occupational functioning or usual social activities or relationships",
+        "moderate": "Symptoms or functional impairment between 'mild' and 'severe'",
+        "severe": "Number of symptoms substantially in excess of that required to make the diagnosis, and symptoms seriously interfere with occupational functioning or usual social activities or relationships"
+      }
+    },
+    "GAD": {
+      "disorder_id": "GAD",
+      "disorder_name": "Generalized Anxiety Disorder",
+      "category": "anxiety_disorders",
+      "criteria_type": "hybrid",
+      "minimum_criteria_count": 3,
+      "duration_requirement": "At least 6 months, more days than not",
+      "clinical_notes": "Excessive anxiety and worry (Criterion A) must be present, along with difficulty controlling worry (Criterion B), and at least 3 of 6 associated symptoms (Criterion C).",
+      "criteria": [
+        {
+          "criterion_id": "GAD_A",
+          "text": "Excessive anxiety and worry (apprehensive expectation), occurring more days than not for at least 6 months, about a number of events or activities",
+          "category": "core_worry",
+          "required": true
+        },
+        {
+          "criterion_id": "GAD_B",
+          "text": "The individual finds it difficult to control the worry",
+          "category": "core_worry",
+          "required": true
+        },
+        {
+          "criterion_id": "GAD_C1",
+          "text": "Restlessness or feeling keyed up or on edge",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        },
+        {
+          "criterion_id": "GAD_C2",
+          "text": "Being easily fatigued",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        },
+        {
+          "criterion_id": "GAD_C3",
+          "text": "Difficulty concentrating or mind going blank",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        },
+        {
+          "criterion_id": "GAD_C4",
+          "text": "Irritability",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        },
+        {
+          "criterion_id": "GAD_C5",
+          "text": "Muscle tension",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        },
+        {
+          "criterion_id": "GAD_C6",
+          "text": "Sleep disturbance (difficulty falling or staying asleep, or restless, unsatisfying sleep)",
+          "category": "associated_symptoms",
+          "required": false,
+          "note": "Need 3 of 6 from C1-C6"
+        }
+      ],
+      "exclusion_criteria": [
+        "Not attributable to physiological effects of a substance or another medical condition",
+        "Not better explained by another mental disorder"
+      ],
+      "severity_levels": {
+        "mild": "Mild functional impairment",
+        "moderate": "Moderate functional impairment",
+        "severe": "Severe functional impairment"
+      }
+    },
+    "PANIC": {
+      "disorder_id": "PANIC",
+      "disorder_name": "Panic Disorder",
+      "category": "anxiety_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "At least 1 month of persistent concern or worry about additional attacks or maladaptive change in behavior",
+      "clinical_notes": "Recurrent unexpected panic attacks required. A panic attack is defined as an abrupt surge of intense fear/discomfort that reaches a peak within minutes, with 4+ of 13 symptoms. Diagnosis requires Criterion A (recurrent attacks) AND Criterion B (persistent concern/worry for at least 1 month).",
+      "criteria": [
+        {
+          "criterion_id": "PAN_A",
+          "text": "Recurrent unexpected panic attacks",
+          "category": "core_symptom",
+          "required": true,
+          "note": "A panic attack = abrupt surge of intense fear/discomfort peaking within minutes with 4+ symptoms from B1-B13"
+        },
+        {
+          "criterion_id": "PAN_B",
+          "text": "At least one of the attacks has been followed by 1 month (or more) of one or both: persistent concern about additional panic attacks or their consequences, OR significant maladaptive change in behavior related to the attacks",
+          "category": "persistent_concern",
+          "required": true
+        }
+      ],
+      "panic_attack_symptoms": [
+        {
+          "symptom_id": "PA_1",
+          "text": "Palpitations, pounding heart, or accelerated heart rate",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_2",
+          "text": "Sweating",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_3",
+          "text": "Trembling or shaking",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_4",
+          "text": "Sensations of shortness of breath or smothering",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_5",
+          "text": "Feelings of choking",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_6",
+          "text": "Chest pain or discomfort",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_7",
+          "text": "Nausea or abdominal distress",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_8",
+          "text": "Feeling dizzy, unsteady, light-headed, or faint",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_9",
+          "text": "Chills or heat sensations",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_10",
+          "text": "Paresthesias (numbness or tingling sensations)",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_11",
+          "text": "Derealization (feelings of unreality) or depersonalization (being detached from oneself)",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_12",
+          "text": "Fear of losing control or 'going crazy'",
+          "note": "Need 4+ for panic attack"
+        },
+        {
+          "symptom_id": "PA_13",
+          "text": "Fear of dying",
+          "note": "Need 4+ for panic attack"
+        }
+      ],
+      "exclusion_criteria": [
+        "Not attributable to physiological effects of a substance or another medical condition",
+        "Not better explained by another mental disorder"
+      ],
+      "severity_levels": {
+        "mild": "Mild worry, little interference",
+        "moderate": "Moderate worry and life interference",
+        "severe": "Severe worry and marked life interference"
+      }
+    },
+    "SUBSTANCE_USE": {
+      "disorder_id": "SUBSTANCE_USE",
+      "disorder_name": "Substance Use Disorder",
+      "category": "substance_use_disorders",
+      "criteria_type": "symptom_count",
+      "minimum_criteria_count": 2,
+      "duration_requirement": "Within a 12-month period",
+      "clinical_notes": "A problematic pattern of substance use leading to clinically significant impairment or distress, manifested by at least 2 of 11 criteria occurring within a 12-month period.",
+      "criteria": [
+        {
+          "criterion_id": "SUD_1",
+          "text": "Substance is often taken in larger amounts or over a longer period than was intended",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_2",
+          "text": "There is a persistent desire or unsuccessful efforts to cut down or control substance use",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_3",
+          "text": "A great deal of time is spent in activities necessary to obtain the substance, use the substance, or recover from its effects",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_4",
+          "text": "Craving, or a strong desire or urge to use the substance",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_5",
+          "text": "Recurrent substance use resulting in a failure to fulfill major role obligations at work, school, or home",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_6",
+          "text": "Continued substance use despite having persistent or recurrent social or interpersonal problems caused or exacerbated by the effects of the substance",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_7",
+          "text": "Important social, occupational, or recreational activities are given up or reduced because of substance use",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_8",
+          "text": "Recurrent substance use in situations in which it is physically hazardous",
+          "category": "risky_use",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_9",
+          "text": "Substance use is continued despite knowledge of having a persistent or recurrent physical or psychological problem that is likely to have been caused or exacerbated by the substance",
+          "category": "risky_use",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_10",
+          "text": "Tolerance, as defined by either: (a) a need for markedly increased amounts of the substance to achieve intoxication or desired effect, or (b) a markedly diminished effect with continued use of the same amount",
+          "category": "pharmacological",
+          "required": false
+        },
+        {
+          "criterion_id": "SUD_11",
+          "text": "Withdrawal, as manifested by either: (a) the characteristic withdrawal syndrome for the substance, or (b) the substance (or a closely related substance) is taken to relieve or avoid withdrawal symptoms",
+          "category": "pharmacological",
+          "required": false
+        }
+      ],
+      "severity_levels": {
+        "mild": "Presence of 2-3 symptoms",
+        "moderate": "Presence of 4-5 symptoms",
+        "severe": "Presence of 6 or more symptoms"
+      }
+    },
+    "ADHD": {
+      "disorder_id": "ADHD",
+      "disorder_name": "Attention-Deficit/Hyperactivity Disorder",
+      "category": "neurodevelopmental_disorders",
+      "criteria_type": "cluster",
+      "minimum_criteria_count": 6,
+      "duration_requirement": "Symptoms present for at least 6 months",
+      "clinical_notes": "Requires 6+ symptoms from either inattention OR hyperactivity-impulsivity (or both for Combined presentation). For individuals 17+ years, at least 5 symptoms are required. Symptoms must be present before age 12, present in two or more settings, and interfere with functioning.",
+      "criteria": [
+        {
+          "criterion_id": "ADHD_IN1",
+          "text": "Often fails to give close attention to details or makes careless mistakes in schoolwork, at work, or during other activities",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN2",
+          "text": "Often has difficulty sustaining attention in tasks or play activities",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN3",
+          "text": "Often does not seem to listen when spoken to directly",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN4",
+          "text": "Often does not follow through on instructions and fails to finish schoolwork, chores, or duties in the workplace",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN5",
+          "text": "Often has difficulty organizing tasks and activities",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN6",
+          "text": "Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN7",
+          "text": "Often loses things necessary for tasks or activities",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN8",
+          "text": "Is often easily distracted by extraneous stimuli",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_IN9",
+          "text": "Is often forgetful in daily activities",
+          "category": "inattention",
+          "required": false,
+          "note": "Need 6+ from inattention cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI1",
+          "text": "Often fidgets with or taps hands or feet or squirms in seat",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI2",
+          "text": "Often leaves seat in situations when remaining seated is expected",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI3",
+          "text": "Often runs about or climbs in situations where it is inappropriate (in adolescents or adults, may be limited to feeling restless)",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI4",
+          "text": "Often unable to play or engage in leisure activities quietly",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI5",
+          "text": "Is often 'on the go,' acting as if 'driven by a motor'",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI6",
+          "text": "Often talks excessively",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI7",
+          "text": "Often blurts out an answer before a question has been completed",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI8",
+          "text": "Often has difficulty waiting his or her turn",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        },
+        {
+          "criterion_id": "ADHD_HI9",
+          "text": "Often interrupts or intrudes on others",
+          "category": "hyperactivity_impulsivity",
+          "required": false,
+          "note": "Need 6+ from H-I cluster (5+ for age 17+)"
+        }
+      ],
+      "presentations": {
+        "combined": "If both Criterion A1 (inattention) and Criterion A2 (hyperactivity-impulsivity) are met for the past 6 months",
+        "predominantly_inattentive": "If Criterion A1 (inattention) is met but Criterion A2 (hyperactivity-impulsivity) is not met for the past 6 months",
+        "predominantly_hyperactive_impulsive": "If Criterion A2 (hyperactivity-impulsivity) is met and Criterion A1 (inattention) is not met for the past 6 months"
+      },
+      "additional_requirements": [
+        "Several inattentive or hyperactive-impulsive symptoms were present prior to age 12 years",
+        "Several symptoms are present in two or more settings",
+        "Clear evidence that symptoms interfere with functioning",
+        "Symptoms do not occur exclusively during course of schizophrenia or another psychotic disorder",
+        "Not better explained by another mental disorder"
+      ],
+      "severity_levels": {
+        "mild": "Few, if any, symptoms in excess of those required to make the diagnosis are present, and symptoms result in no more than minor impairments",
+        "moderate": "Symptoms or functional impairment between 'mild' and 'severe' are present",
+        "severe": "Many symptoms in excess of those required to make the diagnosis, or several symptoms that are particularly severe, are present, or the symptoms result in marked impairment"
+      }
+    },
+    "ADJUSTMENT": {
+      "disorder_id": "ADJUSTMENT",
+      "disorder_name": "Adjustment Disorder",
+      "category": "trauma_stressor_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Symptoms develop within 3 months of onset of stressor(s) and do not persist for more than 6 months after the stressor or its consequences have terminated",
+      "clinical_notes": "Development of emotional or behavioral symptoms in response to an identifiable stressor(s) occurring within 3 months of the onset of the stressor(s).",
+      "criteria": [
+        {
+          "criterion_id": "ADJ_A",
+          "text": "The development of emotional or behavioral symptoms in response to an identifiable stressor(s) occurring within 3 months of the onset of the stressor(s)",
+          "category": "core_symptom",
+          "required": true
+        },
+        {
+          "criterion_id": "ADJ_B",
+          "text": "These symptoms or behaviors are clinically significant, as evidenced by one or both of the following: (1) Marked distress that is out of proportion to the severity or intensity of the stressor, taking into account the external context and cultural factors; (2) Significant impairment in social, occupational, or other important areas of functioning",
+          "category": "clinical_significance",
+          "required": true
+        },
+        {
+          "criterion_id": "ADJ_C",
+          "text": "The stress-related disturbance does not meet the criteria for another mental disorder and is not merely an exacerbation of a preexisting mental disorder",
+          "category": "exclusion",
+          "required": true
+        },
+        {
+          "criterion_id": "ADJ_D",
+          "text": "The symptoms do not represent normal bereavement",
+          "category": "exclusion",
+          "required": true
+        },
+        {
+          "criterion_id": "ADJ_E",
+          "text": "Once the stressor or its consequences have terminated, the symptoms do not persist for more than an additional 6 months",
+          "category": "duration",
+          "required": true
+        }
+      ],
+      "specifiers": {
+        "with_depressed_mood": "Low mood, tearfulness, or feelings of hopelessness are predominant",
+        "with_anxiety": "Nervousness, worry, jitteriness, or separation anxiety is predominant",
+        "with_mixed_anxiety_and_depressed_mood": "A combination of depression and anxiety is predominant",
+        "with_disturbance_of_conduct": "Disturbance of conduct is predominant",
+        "with_mixed_disturbance_of_emotions_and_conduct": "Both emotional symptoms and disturbance of conduct are predominant",
+        "unspecified": "For maladaptive reactions that are not classifiable as one of the specific subtypes"
+      },
+      "severity_levels": {
+        "mild": "Mild symptoms and minor impairment",
+        "moderate": "Moderate symptoms and impairment",
+        "severe": "Severe symptoms and significant impairment"
+      }
+    },
+    "BIPOLAR": {
+      "disorder_id": "BIPOLAR",
+      "disorder_name": "Bipolar I Disorder (Manic Episode)",
+      "category": "mood_disorders",
+      "criteria_type": "hybrid",
+      "minimum_criteria_count": 3,
+      "duration_requirement": "At least 1 week (or any duration if hospitalization is necessary)",
+      "clinical_notes": "A distinct period of abnormally and persistently elevated, expansive, or irritable mood and abnormally and persistently increased goal-directed activity or energy, lasting at least 1 week. Requires 3 (or 4 if mood is only irritable) of 7 symptoms.",
+      "criteria": [
+        {
+          "criterion_id": "BIP_A",
+          "text": "A distinct period of abnormally and persistently elevated, expansive, or irritable mood and abnormally and persistently increased activity or energy, lasting at least 1 week and present most of the day, nearly every day (or any duration if hospitalization is necessary)",
+          "category": "core_mood",
+          "required": true
+        },
+        {
+          "criterion_id": "BIP_B1",
+          "text": "Inflated self-esteem or grandiosity",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B2",
+          "text": "Decreased need for sleep (e.g., feels rested after only 3 hours of sleep)",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B3",
+          "text": "More talkative than usual or pressure to keep talking",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B4",
+          "text": "Flight of ideas or subjective experience that thoughts are racing",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B5",
+          "text": "Distractibility (i.e., attention too easily drawn to unimportant or irrelevant external stimuli), as reported or observed",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B6",
+          "text": "Increase in goal-directed activity (either socially, at work or school, or sexually) or psychomotor agitation",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        },
+        {
+          "criterion_id": "BIP_B7",
+          "text": "Excessive involvement in activities that have a high potential for painful consequences (e.g., engaging in unrestrained buying sprees, sexual indiscretions, or foolish business investments)",
+          "category": "manic_symptoms",
+          "required": false,
+          "note": "Need 3 of 7 (or 4 if mood is only irritable)"
+        }
+      ],
+      "additional_requirements": [
+        "The mood disturbance is sufficiently severe to cause marked impairment in social or occupational functioning or to necessitate hospitalization to prevent harm to self or others, or there are psychotic features",
+        "The episode is not attributable to the physiological effects of a substance or another medical condition"
+      ],
+      "severity_levels": {
+        "mild": "Minimum symptom criteria are met",
+        "moderate": "Very significant increase in activity or impairment in judgment",
+        "severe": "Almost continual supervision required to prevent physical harm to self or others"
+      }
+    },
+    "SOCIAL_ANXIETY": {
+      "disorder_id": "SOCIAL_ANXIETY",
+      "disorder_name": "Social Anxiety Disorder (Social Phobia)",
+      "category": "anxiety_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Typically lasting 6 months or more",
+      "clinical_notes": "Marked fear or anxiety about one or more social situations in which the individual is exposed to possible scrutiny by others. All criteria A through G must be met.",
+      "criteria": [
+        {
+          "criterion_id": "SOC_A",
+          "text": "Marked fear or anxiety about one or more social situations in which the individual is exposed to possible scrutiny by others. Examples include social interactions, being observed, and performing in front of others",
+          "category": "core_fear",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_B",
+          "text": "The individual fears that he or she will act in a way or show anxiety symptoms that will be negatively evaluated",
+          "category": "fear_content",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_C",
+          "text": "The social situations almost always provoke fear or anxiety",
+          "category": "consistency",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_D",
+          "text": "The social situations are avoided or endured with intense fear or anxiety",
+          "category": "avoidance",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_E",
+          "text": "The fear or anxiety is out of proportion to the actual threat posed by the social situation and to the sociocultural context",
+          "category": "proportionality",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_F",
+          "text": "The fear, anxiety, or avoidance is persistent, typically lasting for 6 months or more",
+          "category": "duration",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_G",
+          "text": "The fear, anxiety, or avoidance causes clinically significant distress or impairment in social, occupational, or other important areas of functioning",
+          "category": "impairment",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_H",
+          "text": "The fear, anxiety, or avoidance is not attributable to the physiological effects of a substance or another medical condition",
+          "category": "exclusion",
+          "required": true
+        },
+        {
+          "criterion_id": "SOC_I",
+          "text": "The fear, anxiety, or avoidance is not better explained by the symptoms of another mental disorder",
+          "category": "exclusion",
+          "required": true
+        }
+      ],
+      "specifiers": {
+        "performance_only": "If the fear is restricted to speaking or performing in public"
+      },
+      "severity_levels": {
+        "mild": "Avoidance of or anxiety about 1 feared social situation",
+        "moderate": "Avoidance of or anxiety about at least 2 but less than majority of social situations",
+        "severe": "Avoidance of or anxiety about majority of social situations"
+      }
+    },
+    "SPECIFIC_PHOBIA": {
+      "disorder_id": "SPECIFIC_PHOBIA",
+      "disorder_name": "Specific Phobia",
+      "category": "anxiety_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Typically lasting 6 months or more",
+      "clinical_notes": "Marked fear or anxiety about a specific object or situation. All criteria A through G must be met.",
+      "criteria": [
+        {
+          "criterion_id": "SPH_A",
+          "text": "Marked fear or anxiety about a specific object or situation (e.g., flying, heights, animals, receiving an injection, seeing blood)",
+          "category": "core_fear",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_B",
+          "text": "The phobic object or situation almost always provokes immediate fear or anxiety",
+          "category": "provocation",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_C",
+          "text": "The phobic object or situation is actively avoided or endured with intense fear or anxiety",
+          "category": "avoidance",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_D",
+          "text": "The fear or anxiety is out of proportion to the actual danger posed by the specific object or situation and to the sociocultural context",
+          "category": "proportionality",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_E",
+          "text": "The fear, anxiety, or avoidance is persistent, typically lasting for 6 months or more",
+          "category": "duration",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_F",
+          "text": "The fear, anxiety, or avoidance causes clinically significant distress or impairment in social, occupational, or other important areas of functioning",
+          "category": "impairment",
+          "required": true
+        },
+        {
+          "criterion_id": "SPH_G",
+          "text": "The disturbance is not better explained by the symptoms of another mental disorder",
+          "category": "exclusion",
+          "required": true
+        }
+      ],
+      "specifiers": {
+        "animal": "e.g., spiders, insects, dogs",
+        "natural_environment": "e.g., heights, storms, water",
+        "blood_injection_injury": "e.g., needles, invasive medical procedures",
+        "situational": "e.g., airplanes, elevators, enclosed places",
+        "other": "e.g., situations that may lead to choking or vomiting; in children, loud sounds or costumed characters"
+      },
+      "severity_levels": {
+        "mild": "Mild impairment",
+        "moderate": "Moderate impairment",
+        "severe": "Severe impairment"
+      }
+    },
+    "AGORAPHOBIA": {
+      "disorder_id": "AGORAPHOBIA",
+      "disorder_name": "Agoraphobia",
+      "category": "anxiety_disorders",
+      "criteria_type": "hybrid",
+      "minimum_criteria_count": 2,
+      "duration_requirement": "Typically lasting 6 months or more",
+      "clinical_notes": "Marked fear or anxiety about two (or more) of five situations: public transportation, open spaces, enclosed places, standing in line or being in a crowd, or being outside of the home alone.",
+      "criteria": [
+        {
+          "criterion_id": "AGO_A",
+          "text": "Marked fear or anxiety about two (or more) of the following five situations",
+          "category": "core_requirement",
+          "required": true,
+          "note": "Must have 2+ of the 5 situations below"
+        },
+        {
+          "criterion_id": "AGO_A1",
+          "text": "Using public transportation (e.g., automobiles, buses, trains, ships, planes)",
+          "category": "specific_situations",
+          "required": false,
+          "note": "Part of Criterion A - need 2+ of 5"
+        },
+        {
+          "criterion_id": "AGO_A2",
+          "text": "Being in open spaces (e.g., parking lots, marketplaces, bridges)",
+          "category": "specific_situations",
+          "required": false,
+          "note": "Part of Criterion A - need 2+ of 5"
+        },
+        {
+          "criterion_id": "AGO_A3",
+          "text": "Being in enclosed places (e.g., shops, theaters, cinemas)",
+          "category": "specific_situations",
+          "required": false,
+          "note": "Part of Criterion A - need 2+ of 5"
+        },
+        {
+          "criterion_id": "AGO_A4",
+          "text": "Standing in line or being in a crowd",
+          "category": "specific_situations",
+          "required": false,
+          "note": "Part of Criterion A - need 2+ of 5"
+        },
+        {
+          "criterion_id": "AGO_A5",
+          "text": "Being outside of the home alone",
+          "category": "specific_situations",
+          "required": false,
+          "note": "Part of Criterion A - need 2+ of 5"
+        },
+        {
+          "criterion_id": "AGO_B",
+          "text": "The individual fears or avoids these situations because of thoughts that escape might be difficult or help might not be available in the event of developing panic-like symptoms or other incapacitating or embarrassing symptoms",
+          "category": "fear_rationale",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_C",
+          "text": "The agoraphobic situations almost always provoke fear or anxiety",
+          "category": "consistency",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_D",
+          "text": "The agoraphobic situations are actively avoided, require the presence of a companion, or are endured with intense fear or anxiety",
+          "category": "avoidance",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_E",
+          "text": "The fear or anxiety is out of proportion to the actual danger posed by the agoraphobic situations and to the sociocultural context",
+          "category": "proportionality",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_F",
+          "text": "The fear, anxiety, or avoidance is persistent, typically lasting for 6 months or more",
+          "category": "duration",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_G",
+          "text": "The fear, anxiety, or avoidance causes clinically significant distress or impairment in social, occupational, or other important areas of functioning",
+          "category": "impairment",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_H",
+          "text": "If another medical condition is present, the fear, anxiety, or avoidance is clearly excessive",
+          "category": "exclusion",
+          "required": true
+        },
+        {
+          "criterion_id": "AGO_I",
+          "text": "The fear, anxiety, or avoidance is not better explained by the symptoms of another mental disorder",
+          "category": "exclusion",
+          "required": true
+        }
+      ],
+      "severity_levels": {
+        "mild": "Avoidance of 1 agoraphobic situation",
+        "moderate": "Avoidance of 2 agoraphobic situations",
+        "severe": "Avoidance of 3 or more agoraphobic situations"
+      }
+    },
+    "PTSD": {
+      "disorder_id": "PTSD",
+      "disorder_name": "Posttraumatic Stress Disorder",
+      "category": "trauma_stressor_disorders",
+      "criteria_type": "cluster",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Duration of disturbance is more than 1 month",
+      "clinical_notes": "Exposure to actual or threatened death, serious injury, or sexual violence. Must meet criteria from Criterion B (1+ intrusion symptoms), C (1+ avoidance), D (2+ negative alterations), and E (2+ arousal symptoms).",
+      "criteria": [
+        {
+          "criterion_id": "PTSD_A",
+          "text": "Exposure to actual or threatened death, serious injury, or sexual violence in one (or more) of the following ways: directly experiencing, witnessing, learning it occurred to close family/friend, or experiencing repeated or extreme exposure to aversive details",
+          "category": "exposure",
+          "required": true
+        }
+      ],
+      "criterion_b_intrusion": {
+        "requirement": "One or more of the following intrusion symptoms",
+        "symptoms": [
+          {
+            "criterion_id": "PTSD_B1",
+            "text": "Recurrent, involuntary, and intrusive distressing memories of the traumatic event(s)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_B2",
+            "text": "Recurrent distressing dreams in which the content and/or affect of the dream are related to the traumatic event(s)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_B3",
+            "text": "Dissociative reactions (e.g., flashbacks) in which the individual feels or acts as if the traumatic event(s) were recurring",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_B4",
+            "text": "Intense or prolonged psychological distress at exposure to internal or external cues that symbolize or resemble an aspect of the traumatic event(s)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_B5",
+            "text": "Marked physiological reactions to internal or external cues that symbolize or resemble an aspect of the traumatic event(s)",
+            "required": false
+          }
+        ]
+      },
+      "criterion_c_avoidance": {
+        "requirement": "Persistent avoidance of stimuli associated with the traumatic event(s), beginning after the traumatic event(s) occurred, as evidenced by one or both",
+        "symptoms": [
+          {
+            "criterion_id": "PTSD_C1",
+            "text": "Avoidance of or efforts to avoid distressing memories, thoughts, or feelings about or closely associated with the traumatic event(s)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_C2",
+            "text": "Avoidance of or efforts to avoid external reminders (people, places, conversations, activities, objects, situations) that arouse distressing memories, thoughts, or feelings about or closely associated with the traumatic event(s)",
+            "required": false
+          }
+        ]
+      },
+      "criterion_d_negative_alterations": {
+        "requirement": "Negative alterations in cognitions and mood associated with the traumatic event(s), beginning or worsening after the traumatic event(s) occurred, as evidenced by two (or more)",
+        "symptoms": [
+          {
+            "criterion_id": "PTSD_D1",
+            "text": "Inability to remember an important aspect of the traumatic event(s) (typically due to dissociative amnesia, not to other factors)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D2",
+            "text": "Persistent and exaggerated negative beliefs or expectations about oneself, others, or the world",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D3",
+            "text": "Persistent, distorted cognitions about the cause or consequences of the traumatic event(s) that lead the individual to blame himself/herself or others",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D4",
+            "text": "Persistent negative emotional state (e.g., fear, horror, anger, guilt, or shame)",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D5",
+            "text": "Markedly diminished interest or participation in significant activities",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D6",
+            "text": "Feelings of detachment or estrangement from others",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_D7",
+            "text": "Persistent inability to experience positive emotions (e.g., inability to experience happiness, satisfaction, or loving feelings)",
+            "required": false
+          }
+        ]
+      },
+      "criterion_e_arousal": {
+        "requirement": "Marked alterations in arousal and reactivity associated with the traumatic event(s), beginning or worsening after the traumatic event(s) occurred, as evidenced by two (or more)",
+        "symptoms": [
+          {
+            "criterion_id": "PTSD_E1",
+            "text": "Irritable behavior and angry outbursts (with little or no provocation) typically expressed as verbal or physical aggression toward people or objects",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_E2",
+            "text": "Reckless or self-destructive behavior",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_E3",
+            "text": "Hypervigilance",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_E4",
+            "text": "Exaggerated startle response",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_E5",
+            "text": "Problems with concentration",
+            "required": false
+          },
+          {
+            "criterion_id": "PTSD_E6",
+            "text": "Sleep disturbance (e.g., difficulty falling or staying asleep or restless sleep)",
+            "required": false
+          }
+        ]
+      },
+      "additional_requirements": [
+        "Duration of the disturbance (Criteria B, C, D, and E) is more than 1 month",
+        "The disturbance causes clinically significant distress or impairment in social, occupational, or other important areas of functioning",
+        "The disturbance is not attributable to the physiological effects of a substance or another medical condition"
+      ],
+      "specifiers": {
+        "with_dissociative_symptoms": "Depersonalization or derealization",
+        "with_delayed_expression": "If full diagnostic criteria are not met until at least 6 months after the event"
+      },
+      "severity_levels": {
+        "mild": "Few symptoms beyond those required, minor impairment",
+        "moderate": "Symptoms or functional impairment between 'mild' and 'severe'",
+        "severe": "Many symptoms beyond those required, severe functional impairment"
+      }
+    },
+    "OCD": {
+      "disorder_id": "OCD",
+      "disorder_name": "Obsessive-Compulsive Disorder",
+      "category": "obsessive_compulsive_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Time-consuming (more than 1 hour per day) or cause clinically significant distress or impairment",
+      "clinical_notes": "Presence of obsessions, compulsions, or both. Obsessions and compulsions are defined separately with specific criteria.",
+      "criteria": [
+        {
+          "criterion_id": "OCD_A",
+          "text": "Presence of obsessions, compulsions, or both",
+          "category": "core_symptoms",
+          "required": true
+        }
+      ],
+      "obsessions_definition": {
+        "requirement": "Obsessions are defined by (1) and (2)",
+        "components": [
+          {
+            "component_id": "OBS_1",
+            "text": "Recurrent and persistent thoughts, urges, or images that are experienced, at some time during the disturbance, as intrusive and unwanted, and that in most individuals cause marked anxiety or distress"
+          },
+          {
+            "component_id": "OBS_2",
+            "text": "The individual attempts to ignore or suppress such thoughts, urges, or images, or to neutralize them with some other thought or action (i.e., by performing a compulsion)"
+          }
+        ]
+      },
+      "compulsions_definition": {
+        "requirement": "Compulsions are defined by (1) and (2)",
+        "components": [
+          {
+            "component_id": "COMP_1",
+            "text": "Repetitive behaviors (e.g., hand washing, ordering, checking) or mental acts (e.g., praying, counting, repeating words silently) that the individual feels driven to perform in response to an obsession or according to rules that must be applied rigidly"
+          },
+          {
+            "component_id": "COMP_2",
+            "text": "The behaviors or mental acts are aimed at preventing or reducing anxiety or distress, or preventing some dreaded event or situation; however, these behaviors or mental acts are not connected in a realistic way with what they are designed to neutralize or prevent, or are clearly excessive"
+          }
+        ]
+      },
+      "additional_criteria": [
+        {
+          "criterion_id": "OCD_B",
+          "text": "The obsessions or compulsions are time-consuming (take more than 1 hour per day) or cause clinically significant distress or impairment in social, occupational, or other important areas of functioning",
+          "category": "impairment",
+          "required": true
+        },
+        {
+          "criterion_id": "OCD_C",
+          "text": "The obsessive-compulsive symptoms are not attributable to the physiological effects of a substance or another medical condition",
+          "category": "exclusion",
+          "required": true
+        },
+        {
+          "criterion_id": "OCD_D",
+          "text": "The disturbance is not better explained by the symptoms of another mental disorder",
+          "category": "exclusion",
+          "required": true
+        }
+      ],
+      "specifiers": {
+        "with_good_or_fair_insight": "The individual recognizes that OCD beliefs are definitely or probably not true",
+        "with_poor_insight": "The individual thinks OCD beliefs are probably true",
+        "with_absent_insight_delusional": "The individual is completely convinced that OCD beliefs are true",
+        "tic_related": "The individual has a current or past history of a tic disorder"
+      },
+      "severity_levels": {
+        "mild": "Time consumed by symptoms is 1-3 hours per day, or occasional intrusion with mild impairment",
+        "moderate": "Time consumed is 3-8 hours per day, or frequent intrusion with moderate impairment",
+        "severe": "Time consumed is greater than 8 hours per day, or near-constant intrusion with severe impairment"
+      }
+    },
+    "ALCOHOL_USE": {
+      "disorder_id": "ALCOHOL_USE",
+      "disorder_name": "Alcohol Use Disorder",
+      "category": "substance_use_disorders",
+      "criteria_type": "symptom_count",
+      "minimum_criteria_count": 2,
+      "duration_requirement": "Within a 12-month period",
+      "clinical_notes": "A problematic pattern of alcohol use leading to clinically significant impairment or distress, as manifested by at least 2 of 11 criteria, occurring within a 12-month period. Identical structure to general Substance Use Disorder but specific to alcohol.",
+      "criteria": [
+        {
+          "criterion_id": "AUD_1",
+          "text": "Alcohol is often taken in larger amounts or over a longer period than was intended",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_2",
+          "text": "There is a persistent desire or unsuccessful efforts to cut down or control alcohol use",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_3",
+          "text": "A great deal of time is spent in activities necessary to obtain alcohol, use alcohol, or recover from its effects",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_4",
+          "text": "Craving, or a strong desire or urge to use alcohol",
+          "category": "impaired_control",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_5",
+          "text": "Recurrent alcohol use resulting in a failure to fulfill major role obligations at work, school, or home",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_6",
+          "text": "Continued alcohol use despite having persistent or recurrent social or interpersonal problems caused or exacerbated by the effects of alcohol",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_7",
+          "text": "Important social, occupational, or recreational activities are given up or reduced because of alcohol use",
+          "category": "social_impairment",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_8",
+          "text": "Recurrent alcohol use in situations in which it is physically hazardous",
+          "category": "risky_use",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_9",
+          "text": "Alcohol use is continued despite knowledge of having a persistent or recurrent physical or psychological problem that is likely to have been caused or exacerbated by alcohol",
+          "category": "risky_use",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_10",
+          "text": "Tolerance, as defined by either: (a) a need for markedly increased amounts of alcohol to achieve intoxication or desired effect, or (b) a markedly diminished effect with continued use of the same amount of alcohol",
+          "category": "pharmacological",
+          "required": false
+        },
+        {
+          "criterion_id": "AUD_11",
+          "text": "Withdrawal, as manifested by either: (a) the characteristic withdrawal syndrome for alcohol, or (b) alcohol (or a closely related substance) is taken to relieve or avoid withdrawal symptoms",
+          "category": "pharmacological",
+          "required": false
+        }
+      ],
+      "severity_levels": {
+        "mild": "Presence of 2-3 symptoms",
+        "moderate": "Presence of 4-5 symptoms",
+        "severe": "Presence of 6 or more symptoms"
+      },
+      "specifiers": {
+        "in_early_remission": "After full criteria were previously met, none of the criteria have been met for at least 3 months but for less than 12 months (except Criterion A4, craving, may be met)",
+        "in_sustained_remission": "After full criteria were previously met, none of the criteria have been met at any time during a period of 12 months or longer (except Criterion A4, craving, may be met)",
+        "in_a_controlled_environment": "This additional specifier is used if the individual is in an environment where access to alcohol is restricted"
+      }
+    },
+    "EATING_DISORDERS": {
+      "disorder_id": "EATING_DISORDERS",
+      "disorder_name": "Eating Disorders (Anorexia Nervosa)",
+      "category": "eating_disorders",
+      "criteria_type": "sequential",
+      "minimum_criteria_count": null,
+      "duration_requirement": "Persistent (typically at least 3 months)",
+      "clinical_notes": "This represents Anorexia Nervosa criteria. For comprehensive eating disorders assessment, separate criteria for Bulimia Nervosa and Binge-Eating Disorder should be included.",
+      "criteria": [
+        {
+          "criterion_id": "AN_A",
+          "text": "Restriction of energy intake relative to requirements, leading to a significantly low body weight in the context of age, sex, developmental trajectory, and physical health",
+          "category": "restriction",
+          "required": true
+        },
+        {
+          "criterion_id": "AN_B",
+          "text": "Intense fear of gaining weight or of becoming fat, or persistent behavior that interferes with weight gain, even though at a significantly low weight",
+          "category": "fear",
+          "required": true
+        },
+        {
+          "criterion_id": "AN_C",
+          "text": "Disturbance in the way in which one's body weight or shape is experienced, undue influence of body weight or shape on self-evaluation, or persistent lack of recognition of the seriousness of the current low body weight",
+          "category": "body_image",
+          "required": true
+        }
+      ],
+      "specifiers": {
+        "restricting_type": "During the last 3 months, the individual has not engaged in recurrent episodes of binge eating or purging behavior (i.e., self-induced vomiting or the misuse of laxatives, diuretics, or enemas)",
+        "binge_eating_purging_type": "During the last 3 months, the individual has engaged in recurrent episodes of binge eating or purging behavior"
+      },
+      "severity_levels": {
+        "mild": "BMI ≥ 17 kg/m²",
+        "moderate": "BMI 16-16.99 kg/m²",
+        "severe": "BMI 15-15.99 kg/m²",
+        "extreme": "BMI < 15 kg/m²"
+      },
+      "note": "For complete eating disorders assessment, also consider Bulimia Nervosa (recurrent binge eating + compensatory behaviors) and Binge-Eating Disorder (recurrent binge eating without compensatory behaviors)"
+    }
+  },
+  "categories": {
+    "mood_disorders": ["MDD", "BIPOLAR"],
+    "anxiety_disorders": ["GAD", "PANIC", "SOCIAL_ANXIETY", "SPECIFIC_PHOBIA", "AGORAPHOBIA"],
+    "trauma_stressor_disorders": ["PTSD", "ADJUSTMENT"],
+    "obsessive_compulsive_disorders": ["OCD"],
+    "substance_use_disorders": ["SUBSTANCE_USE", "ALCOHOL_USE"],
+    "eating_disorders": ["EATING_DISORDERS"],
+    "neurodevelopmental_disorders": ["ADHD"]
+  },
+  "criteria_types_explained": {
+    "symptom_count": "Need X number of symptoms from a list (e.g., 5 of 9 for MDD)",
+    "sequential": "Must meet all criteria A, B, C, D, etc. in order",
+    "hybrid": "Combination of required core criteria plus symptom count (e.g., GAD needs A+B+3 of 6)",
+    "cluster": "Must meet minimum from multiple symptom clusters (e.g., PTSD needs 1+ from B, 1+ from C, 2+ from D, 2+ from E)"
+  }
+}

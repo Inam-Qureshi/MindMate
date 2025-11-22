@@ -1,0 +1,254 @@
+/* Journal Entry Modal Styles */
+.journal-entry-modal {
+  min-height: 400px;
+}
+
+.journal-entry-modal.dark {
+  color: #f9fafb;
+}
+
+/* Success State */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  min-height: 300px;
+}
+
+.success-icon {
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.success-state h3 {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.success-state p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.journal-entry-modal.dark .success-state p {
+  color: #9ca3af;
+}
+
+/* Journal Form */
+.journal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.journal-entry-modal.dark .form-group label {
+  color: #d1d5db;
+}
+
+.journal-textarea,
+.journal-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.journal-textarea:focus,
+.journal-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.journal-entry-modal.dark .journal-textarea,
+.journal-entry-modal.dark .journal-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.journal-entry-modal.dark .journal-textarea:focus,
+.journal-entry-modal.dark .journal-input:focus {
+  border-color: #3b82f6;
+}
+
+.journal-textarea:disabled,
+.journal-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.char-count {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+}
+
+.journal-entry-modal.dark .char-count {
+  color: #9ca3af;
+}
+
+/* Mood Options */
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.mood-option {
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.mood-option:hover:not(:disabled) {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mood-option.selected {
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mood-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.journal-entry-modal.dark .mood-option {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.journal-entry-modal.dark .mood-option:hover:not(:disabled) {
+  border-color: #3b82f6;
+}
+
+.form-group small {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: -0.25rem;
+}
+
+.journal-entry-modal.dark .form-group small {
+  color: #9ca3af;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.journal-entry-modal.dark .form-actions {
+  border-top-color: #374151;
+}
+
+.cancel-btn,
+.submit-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.journal-entry-modal.dark .cancel-btn {
+  background: #374151;
+  color: #d1d5db;
+}
+
+.journal-entry-modal.dark .cancel-btn:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.submit-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .mood-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

@@ -1,0 +1,403 @@
+{
+  "test_timestamp": "2025-11-14T07:35:58.931708",
+  "total_cases": 4,
+  "results": [
+    {
+      "case_id": "depression_mild",
+      "system_version": "old",
+      "diagnosis": null,
+      "risk_level": "unknown",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 5,
+        "empathy_score": 0.0,
+        "coherence_score": 0.0,
+        "response_quality": 0.0
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 8.81044,
+      "error_count": 0,
+      "clinical_findings": {
+        "symptom_categories": [],
+        "risk_factors": []
+      }
+    },
+    {
+      "case_id": "depression_mild",
+      "system_version": "new",
+      "diagnosis": null,
+      "risk_level": "error",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 0,
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 0.031784,
+      "error_count": 1,
+      "clinical_findings": {
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      }
+    },
+    {
+      "case_id": "anxiety_moderate",
+      "system_version": "old",
+      "diagnosis": null,
+      "risk_level": "unknown",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 5,
+        "empathy_score": 0.0,
+        "coherence_score": 0.0,
+        "response_quality": 0.0
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 7.066464,
+      "error_count": 0,
+      "clinical_findings": {
+        "symptom_categories": [],
+        "risk_factors": []
+      }
+    },
+    {
+      "case_id": "anxiety_moderate",
+      "system_version": "new",
+      "diagnosis": null,
+      "risk_level": "error",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 0,
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 0.002787,
+      "error_count": 1,
+      "clinical_findings": {
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      }
+    },
+    {
+      "case_id": "mixed_depression_anxiety",
+      "system_version": "old",
+      "diagnosis": null,
+      "risk_level": "unknown",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 6,
+        "empathy_score": 0.0,
+        "coherence_score": 0.0,
+        "response_quality": 0.0
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 6.042023,
+      "error_count": 0,
+      "clinical_findings": {
+        "symptom_categories": [],
+        "risk_factors": []
+      }
+    },
+    {
+      "case_id": "mixed_depression_anxiety",
+      "system_version": "new",
+      "diagnosis": null,
+      "risk_level": "error",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 0,
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 0.002865,
+      "error_count": 1,
+      "clinical_findings": {
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      }
+    },
+    {
+      "case_id": "high_risk_suicidal",
+      "system_version": "old",
+      "diagnosis": null,
+      "risk_level": "unknown",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 5,
+        "empathy_score": 0.0,
+        "coherence_score": 0.0,
+        "response_quality": 0.0
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 38.790501,
+      "error_count": 0,
+      "clinical_findings": {
+        "symptom_categories": [],
+        "risk_factors": []
+      }
+    },
+    {
+      "case_id": "high_risk_suicidal",
+      "system_version": "new",
+      "diagnosis": null,
+      "risk_level": "error",
+      "treatment_recommendations": [],
+      "conversation_metrics": {
+        "total_turns": 0,
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      },
+      "clinical_accuracy_score": 0.0,
+      "safety_score": 0.0,
+      "empathy_score": 0.0,
+      "completion_time": 0.005174,
+      "error_count": 1,
+      "clinical_findings": {
+        "error": "'NoneType' object has no attribute 'clinical_findings'"
+      }
+    }
+  ],
+  "comparative_analysis": [
+    {
+      "case_id": "depression_mild",
+      "old_system_result": {
+        "case_id": "depression_mild",
+        "system_version": "old",
+        "diagnosis": null,
+        "risk_level": "unknown",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 5,
+          "empathy_score": 0.0,
+          "coherence_score": 0.0,
+          "response_quality": 0.0
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 8.81044,
+        "error_count": 0,
+        "clinical_findings": {
+          "symptom_categories": [],
+          "risk_factors": []
+        }
+      },
+      "new_system_result": {
+        "case_id": "depression_mild",
+        "system_version": "new",
+        "diagnosis": null,
+        "risk_level": "error",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 0,
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 0.031784,
+        "error_count": 1,
+        "clinical_findings": {
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        }
+      },
+      "diagnosis_agreement": true,
+      "risk_level_agreement": false,
+      "clinical_accuracy_improvement": 0.0,
+      "safety_improvement": 0.0,
+      "empathy_improvement": 0.0,
+      "time_difference": 8.778656,
+      "key_differences": [
+        "Different risk levels: Old=unknown, New=error"
+      ],
+      "recommendations": []
+    },
+    {
+      "case_id": "anxiety_moderate",
+      "old_system_result": {
+        "case_id": "anxiety_moderate",
+        "system_version": "old",
+        "diagnosis": null,
+        "risk_level": "unknown",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 5,
+          "empathy_score": 0.0,
+          "coherence_score": 0.0,
+          "response_quality": 0.0
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 7.066464,
+        "error_count": 0,
+        "clinical_findings": {
+          "symptom_categories": [],
+          "risk_factors": []
+        }
+      },
+      "new_system_result": {
+        "case_id": "anxiety_moderate",
+        "system_version": "new",
+        "diagnosis": null,
+        "risk_level": "error",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 0,
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 0.002787,
+        "error_count": 1,
+        "clinical_findings": {
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        }
+      },
+      "diagnosis_agreement": true,
+      "risk_level_agreement": false,
+      "clinical_accuracy_improvement": 0.0,
+      "safety_improvement": 0.0,
+      "empathy_improvement": 0.0,
+      "time_difference": 7.063677,
+      "key_differences": [
+        "Different risk levels: Old=unknown, New=error"
+      ],
+      "recommendations": []
+    },
+    {
+      "case_id": "mixed_depression_anxiety",
+      "old_system_result": {
+        "case_id": "mixed_depression_anxiety",
+        "system_version": "old",
+        "diagnosis": null,
+        "risk_level": "unknown",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 6,
+          "empathy_score": 0.0,
+          "coherence_score": 0.0,
+          "response_quality": 0.0
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 6.042023,
+        "error_count": 0,
+        "clinical_findings": {
+          "symptom_categories": [],
+          "risk_factors": []
+        }
+      },
+      "new_system_result": {
+        "case_id": "mixed_depression_anxiety",
+        "system_version": "new",
+        "diagnosis": null,
+        "risk_level": "error",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 0,
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 0.002865,
+        "error_count": 1,
+        "clinical_findings": {
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        }
+      },
+      "diagnosis_agreement": true,
+      "risk_level_agreement": false,
+      "clinical_accuracy_improvement": 0.0,
+      "safety_improvement": 0.0,
+      "empathy_improvement": 0.0,
+      "time_difference": 6.0391580000000005,
+      "key_differences": [
+        "Different risk levels: Old=unknown, New=error"
+      ],
+      "recommendations": []
+    },
+    {
+      "case_id": "high_risk_suicidal",
+      "old_system_result": {
+        "case_id": "high_risk_suicidal",
+        "system_version": "old",
+        "diagnosis": null,
+        "risk_level": "unknown",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 5,
+          "empathy_score": 0.0,
+          "coherence_score": 0.0,
+          "response_quality": 0.0
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 38.790501,
+        "error_count": 0,
+        "clinical_findings": {
+          "symptom_categories": [],
+          "risk_factors": []
+        }
+      },
+      "new_system_result": {
+        "case_id": "high_risk_suicidal",
+        "system_version": "new",
+        "diagnosis": null,
+        "risk_level": "error",
+        "treatment_recommendations": [],
+        "conversation_metrics": {
+          "total_turns": 0,
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        },
+        "clinical_accuracy_score": 0.0,
+        "safety_score": 0.0,
+        "empathy_score": 0.0,
+        "completion_time": 0.005174,
+        "error_count": 1,
+        "clinical_findings": {
+          "error": "'NoneType' object has no attribute 'clinical_findings'"
+        }
+      },
+      "diagnosis_agreement": true,
+      "risk_level_agreement": false,
+      "clinical_accuracy_improvement": 0.0,
+      "safety_improvement": 0.0,
+      "empathy_improvement": 0.0,
+      "time_difference": 38.785327,
+      "key_differences": [
+        "Different risk levels: Old=unknown, New=error"
+      ],
+      "recommendations": [
+        "New system provides faster assessments"
+      ]
+    }
+  ],
+  "summary_metrics": {
+    "total_cases": 4,
+    "diagnosis_agreement_rate": 1.0,
+    "risk_agreement_rate": 0.0,
+    "average_accuracy_improvement": 0.0,
+    "average_safety_improvement": 0.0,
+    "average_empathy_improvement": 0.0,
+    "average_time_difference": 15.166704500000002,
+    "accuracy_improvement_std": 0.0,
+    "cases_with_accuracy_improvement": 0,
+    "cases_with_safety_improvement": 0,
+    "cases_with_empathy_improvement": 0
+  }
+}

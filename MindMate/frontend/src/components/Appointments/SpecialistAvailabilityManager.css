@@ -1,0 +1,445 @@
+.specialist-availability-manager {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.availability-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.availability-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.availability-header p {
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+/* Appointment Type Section */
+.appointment-type-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.appointment-type-section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.type-selector {
+  display: flex;
+  gap: 1rem;
+}
+
+.type-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.type-button:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.type-button.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+/* Weekly Schedule Section */
+.weekly-schedule-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.weekly-schedule-section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.schedule-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.day-schedule {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.day-schedule:hover {
+  border-color: #d1d5db;
+}
+
+.day-header {
+  margin-bottom: 1rem;
+}
+
+.day-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.day-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #3b82f6;
+}
+
+.day-times {
+  display: grid;
+  gap: 1rem;
+}
+
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.time-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-input label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.time-input input[type="time"] {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.time-input input[type="time"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.slot-length {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slot-length label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.slot-length select {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.slot-length select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Slot Generation Section */
+.slot-generation-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.slot-generation-section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.generation-controls {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-inputs {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.date-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.date-input label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.date-input input[type="date"] {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.date-input input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.generate-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.generate-button:hover:not(:disabled) {
+  background: #059669;
+}
+
+.generate-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.save-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.save-button:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+}
+
+.save-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Status Messages */
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.status-message.error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-message.success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Mode */
+.specialist-availability-manager.dark {
+  background: #111827;
+  color: #f9fafb;
+}
+
+.specialist-availability-manager.dark .availability-header h2 {
+  color: #f9fafb;
+}
+
+.specialist-availability-manager.dark .availability-header p {
+  color: #d1d5db;
+}
+
+.specialist-availability-manager.dark .appointment-type-section,
+.specialist-availability-manager.dark .weekly-schedule-section,
+.specialist-availability-manager.dark .slot-generation-section {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.specialist-availability-manager.dark .appointment-type-section h3,
+.specialist-availability-manager.dark .weekly-schedule-section h3,
+.specialist-availability-manager.dark .slot-generation-section h3 {
+  color: #f9fafb;
+}
+
+.specialist-availability-manager.dark .type-button {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.specialist-availability-manager.dark .type-button:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.specialist-availability-manager.dark .type-button.active {
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+.specialist-availability-manager.dark .day-schedule {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.specialist-availability-manager.dark .day-toggle {
+  color: #d1d5db;
+}
+
+.specialist-availability-manager.dark .time-input label,
+.specialist-availability-manager.dark .slot-length label,
+.specialist-availability-manager.dark .date-input label {
+  color: #d1d5db;
+}
+
+.specialist-availability-manager.dark .time-input input[type="time"],
+.specialist-availability-manager.dark .slot-length select,
+.specialist-availability-manager.dark .date-input input[type="date"] {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+.specialist-availability-manager.dark .time-input input[type="time"]:focus,
+.specialist-availability-manager.dark .slot-length select:focus,
+.specialist-availability-manager.dark .date-input input[type="date"]:focus {
+  border-color: #3b82f6;
+  background: #374151;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .specialist-availability-manager {
+    padding: 1rem;
+  }
+  
+  .type-selector {
+    flex-direction: column;
+  }
+  
+  .time-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .generation-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .date-inputs {
+    flex-direction: column;
+  }
+  
+  .date-input {
+    min-width: auto;
+  }
+}

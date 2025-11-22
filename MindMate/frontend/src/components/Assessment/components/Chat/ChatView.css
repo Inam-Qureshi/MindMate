@@ -1,0 +1,84 @@
+/* Chat View Styles - Full Height like ChatGPT */
+.chat-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: white;
+  overflow: hidden;
+}
+
+.chat-view.dark {
+  background: #343541;
+}
+
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding: 0;
+  background: #ffffff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-view.dark .chat-messages-container {
+  background: #343541;
+}
+
+.chat-complete-message {
+  padding: 1rem 1.5rem;
+  background: #dcfce7;
+  border-top: 1px solid #bbf7d0;
+  text-align: center;
+  color: #166534;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.chat-view.dark .chat-complete-message {
+  background: #14532d;
+  border-top-color: #166534;
+  color: #86efac;
+}
+
+/* Scrollbar Styling */
+.chat-messages-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+.chat-view.dark .chat-messages-container::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.chat-view.dark .chat-messages-container::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-view {
+    height: 100%;
+  }
+  
+  .chat-messages-container {
+    padding: 0;
+  }
+}
+

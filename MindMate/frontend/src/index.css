@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Prevent browser extension interference */
+[data-gramm="false"],
+[data-gramm_editor="false"],
+[data-enable-grammarly="false"] {
+  /* Disable Grammarly and other extension overlays */
+  position: relative !important;
+}
+
+/* Hide extension overlays and tooltips */
+.grammarly-extension,
+.grammarly-extension *,
+[data-grammarly-shadow-root],
+[data-grammarly-shadow-root] * {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Hide sidebar when hide-sidebar class is on body */
+body.hide-sidebar #sidebar {
+  display: none !important;
+}
+
+body.hide-sidebar #main-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+.modal-scroll {
+  scrollbar-width: thin;
+}
+
+.modal-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.5);
+  border-radius: 6px;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+

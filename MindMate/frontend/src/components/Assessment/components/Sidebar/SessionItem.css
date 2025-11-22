@@ -1,0 +1,240 @@
+/* Session Item Styles */
+.session-item {
+  padding: 0.9rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+  border: 1px solid transparent;
+}
+
+.session-item:hover {
+  background: #f3f4f6;
+}
+
+.session-item.dark:hover {
+  background: #4b5563;
+}
+
+.session-item.active {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  box-shadow: 0 6px 18px rgba(103, 126, 234, 0.18);
+}
+
+.session-item.active.dark {
+  background: rgba(102, 126, 234, 0.18);
+  border-color: #667eea;
+}
+
+.session-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.session-item-icon {
+  color: #6b7280;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-item.active .session-item-icon {
+  color: #667eea;
+}
+
+.session-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.session-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.session-item-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-item.dark .session-item-title {
+  color: #f7fafc;
+}
+
+.session-item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.session-item-status svg {
+  flex-shrink: 0;
+}
+
+.status-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.status-in_progress {
+  background: rgba(96, 165, 250, 0.18);
+  color: #1d4ed8;
+}
+
+.session-item.dark .session-item-status {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+.session-item-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.session-item-progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  position: relative;
+}
+
+.session-item-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.4s ease;
+}
+
+.session-item-progress-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #4b5563;
+  min-width: 2.25rem;
+  text-align: right;
+}
+
+.session-item.dark .session-item-progress-bar {
+  background: #4b5563;
+}
+
+.session-item.dark .session-item-progress-label {
+  color: #e5e7eb;
+}
+
+.session-item-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+}
+
+.module-chip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 500;
+}
+
+.module-chip.current {
+  background: rgba(96, 165, 250, 0.2);
+  color: #1d4ed8;
+}
+
+.module-chip.next {
+  background: rgba(251, 191, 36, 0.18);
+  color: #b45309;
+}
+
+.session-item.dark .module-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+}
+
+.session-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.session-item.dark .session-item-footer {
+  color: #d1d5db;
+}
+
+.session-item-time {
+  white-space: nowrap;
+}
+
+.session-item-symptom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(236, 72, 153, 0.12);
+  color: #be185d;
+  font-weight: 500;
+}
+
+.session-item.dark .session-item-symptom {
+  background: rgba(236, 72, 153, 0.2);
+  color: #fbcfe8;
+}
+
+.session-item-delete {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 0.35rem;
+  opacity: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.session-item:hover .session-item-delete {
+  opacity: 1;
+}
+
+.session-item-delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.session-item.dark .session-item-delete {
+  color: #9ca3af;
+}
+
+.session-item.dark .session-item-delete:hover {
+  background: rgba(220, 38, 38, 0.25);
+  color: #fecaca;
+}

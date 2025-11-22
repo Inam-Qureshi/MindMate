@@ -1,0 +1,384 @@
+/* Start Exercise Modal Styles */
+.start-exercise-modal {
+  min-height: 400px;
+}
+
+.start-exercise-modal.dark {
+  color: #f9fafb;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  min-height: 300px;
+}
+
+.loading-state .spinner {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success State */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  min-height: 300px;
+}
+
+.success-icon {
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.success-state h3 {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.success-state p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.start-exercise-modal.dark .success-state p {
+  color: #9ca3af;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  width: 100%;
+}
+
+.start-exercise-modal.dark .session-info {
+  background: #374151;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.info-item svg {
+  color: #3b82f6;
+}
+
+/* Exercise Selection */
+.exercise-selection {
+  margin-bottom: 2rem;
+}
+
+.exercise-selection h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.start-exercise-modal.dark .subtitle {
+  color: #9ca3af;
+}
+
+/* Exercises Grid */
+.exercises-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.exercise-card {
+  position: relative;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.exercise-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-card.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.start-exercise-modal.dark .exercise-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.start-exercise-modal.dark .exercise-card:hover {
+  border-color: #3b82f6;
+}
+
+.start-exercise-modal.dark .exercise-card.selected {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.exercise-icon {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.exercise-info {
+  flex: 1;
+}
+
+.exercise-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.start-exercise-modal.dark .exercise-info h4 {
+  color: #f9fafb;
+}
+
+.exercise-description {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.start-exercise-modal.dark .exercise-description {
+  color: #9ca3af;
+}
+
+.exercise-category {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.start-exercise-modal.dark .exercise-category {
+  background: #4b5563;
+  color: #d1d5db;
+}
+
+.selected-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #3b82f6;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.start-exercise-modal.dark .empty-state {
+  color: #9ca3af;
+}
+
+/* Exercise Details */
+.exercise-details {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f3f4f6;
+  border-radius: 0.75rem;
+}
+
+.start-exercise-modal.dark .exercise-details {
+  background: #374151;
+}
+
+.exercise-details h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.detail-item.full-width {
+  flex-direction: column;
+}
+
+.detail-item svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.start-exercise-modal.dark .detail-label {
+  color: #9ca3af;
+}
+
+.detail-value {
+  display: block;
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.start-exercise-modal.dark .detail-value {
+  color: #f9fafb;
+}
+
+.detail-description {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.start-exercise-modal.dark .detail-description {
+  color: #d1d5db;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.start-exercise-modal.dark .modal-actions {
+  border-top-color: #374151;
+}
+
+.cancel-btn,
+.start-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.start-exercise-modal.dark .cancel-btn {
+  background: #374151;
+  color: #d1d5db;
+}
+
+.start-exercise-modal.dark .cancel-btn:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.start-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.start-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.start-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .exercises-grid {
+    grid-template-columns: 1fr;
+    max-height: 300px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .cancel-btn,
+  .start-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

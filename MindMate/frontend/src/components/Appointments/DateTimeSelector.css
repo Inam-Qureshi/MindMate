@@ -1,0 +1,641 @@
+/* Date Time Selector - Professional Design */
+.date-time-selector {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.date-time-selector.dark {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+/* Consultation Mode Selection */
+.consultation-mode-selection {
+  margin-bottom: 2rem;
+}
+
+.consultation-mode-selection h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.date-time-selector.dark .consultation-mode-selection h4 {
+  color: #f9fafb;
+}
+
+.mode-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.date-time-selector.dark .mode-option {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.mode-option:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.date-time-selector.dark .mode-option:hover {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.mode-option.selected {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+.date-time-selector.dark .mode-option.selected {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.mode-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.mode-content {
+  flex: 1;
+}
+
+.mode-content h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.date-time-selector.dark .mode-content h5 {
+  color: #f9fafb;
+}
+
+.mode-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.date-time-selector.dark .mode-content p {
+  color: #9ca3af;
+}
+
+.mode-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feature-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.date-time-selector.dark .feature-tag {
+  background: #0c4a6e;
+  color: #7dd3fc;
+}
+
+.selected-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* Duration Selection */
+.duration-selection {
+  margin-bottom: 2rem;
+}
+
+.duration-selection h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.date-time-selector.dark .duration-selection h4 {
+  color: #f9fafb;
+}
+
+.duration-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.duration-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.date-time-selector.dark .duration-option {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.duration-option:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.date-time-selector.dark .duration-option:hover {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.duration-option.selected {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+.date-time-selector.dark .duration-option.selected {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.duration-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.date-time-selector.dark .duration-value {
+  color: #f9fafb;
+}
+
+.duration-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.date-time-selector.dark .duration-label {
+  color: #d1d5db;
+}
+
+.duration-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.date-time-selector.dark .duration-description {
+  color: #9ca3af;
+}
+
+/* Calendar Section */
+.calendar-section {
+  margin-bottom: 2rem;
+}
+
+.calendar-section h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.date-time-selector.dark .calendar-section h4 {
+  color: #f9fafb;
+}
+
+.calendar-container {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.date-time-selector.dark .calendar-container {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.date-time-selector.dark .calendar-header {
+  border-bottom-color: #6b7280;
+}
+
+.nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+  background: #2563eb;
+}
+
+.calendar-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.date-time-selector.dark .calendar-header h3 {
+  color: #f9fafb;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.calendar-weekdays {
+  display: contents;
+}
+
+.weekday {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.date-time-selector.dark .weekday {
+  color: #9ca3af;
+  border-bottom-color: #6b7280;
+}
+
+.calendar-days {
+  display: contents;
+}
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+}
+
+.calendar-day.empty {
+  cursor: default;
+  visibility: hidden;
+}
+
+.calendar-day.available {
+  color: #374151;
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+.date-time-selector.dark .calendar-day.available {
+  color: #d1d5db;
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.calendar-day.available:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.calendar-day.selected {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.calendar-day.today {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.date-time-selector.dark .calendar-day.today {
+  background: #451a03;
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+
+.calendar-day:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Time Slots Section */
+.time-slots-section {
+  margin-bottom: 2rem;
+}
+
+.time-slots-section h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.date-time-selector.dark .time-slots-section h4 {
+  color: #f9fafb;
+}
+
+.time-slots-container {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.date-time-selector.dark .time-slots-container {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.time-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.date-time-selector.dark .time-slot {
+  background: #374151;
+  border-color: #6b7280;
+}
+
+.time-slot:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.date-time-selector.dark .time-slot:hover {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.time-slot.selected {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+.date-time-selector.dark .time-slot.selected {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.time-slot.booked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.date-time-selector.dark .time-slot.booked {
+  background: #4b5563;
+}
+
+.time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.time-range {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.date-time-selector.dark .time-range {
+  color: #f9fafb;
+}
+
+.time-duration {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.date-time-selector.dark .time-duration {
+  color: #9ca3af;
+}
+
+.time-price {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #059669;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+  background: #d1fae5;
+  border-radius: 0.5rem;
+}
+
+.date-time-selector.dark .time-price {
+  color: #a7f3d0;
+  background: #064e3b;
+}
+
+.booked-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.date-time-selector.dark .booked-indicator {
+  color: #fca5a5;
+  background: #4a1a1a;
+}
+
+.no-slots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.date-time-selector.dark .no-slots {
+  color: #9ca3af;
+}
+
+.no-slots p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+/* Selection Summary */
+.selection-summary {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.date-time-selector.dark .selection-summary {
+  background: #0c4a6e;
+  border-color: #0ea5e9;
+}
+
+.selection-summary h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 1rem;
+}
+
+.date-time-selector.dark .selection-summary h4 {
+  color: #7dd3fc;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: #1e40af;
+}
+
+.date-time-selector.dark .summary-item {
+  color: #7dd3fc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .date-time-selector {
+    padding: 1rem;
+  }
+  
+  .mode-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .duration-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+  
+  .calendar-day {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.75rem;
+  }
+  
+  .time-slots-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-slot {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-time-selector {
+    padding: 0.75rem;
+  }
+  
+  .mode-option {
+    padding: 1rem;
+  }
+  
+  .duration-option {
+    padding: 0.75rem;
+  }
+  
+  .calendar-container {
+    padding: 0.75rem;
+  }
+  
+  .time-slots-container {
+    padding: 0.75rem;
+  }
+  
+  .calendar-day {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+  }
+}

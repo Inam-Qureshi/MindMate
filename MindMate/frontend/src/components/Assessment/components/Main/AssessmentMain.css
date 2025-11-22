@@ -1,0 +1,28 @@
+/* Assessment Main Styles - Full Height like ChatGPT */
+.assessment-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex shrinking */
+  overflow: hidden; /* Prevent main scrolling */
+  background: #ffffff;
+  height: 100%; /* Take full height */
+}
+
+.assessment-main.dark {
+  background: #343541;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .assessment-main {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .assessment-main {
+    min-height: calc(100vh - 200px);
+  }
+}
+

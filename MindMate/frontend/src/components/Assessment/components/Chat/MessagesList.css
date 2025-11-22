@@ -1,0 +1,41 @@
+/* Messages List Styles - ChatGPT-like */
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  padding: 1.5rem 1rem;
+  /* Removed max-width and margin: 0 auto to allow full-width alignment */
+}
+
+.messages-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1; /* Take available space */
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.messages-list.dark .messages-list-empty {
+  color: #9ca3af;
+}
+
+/* Message spacing */
+.messages-list > * {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .messages-list {
+    padding: 1rem 0.75rem;
+  }
+  
+  .messages-list-empty {
+    padding: 1.5rem;
+  }
+}
+

@@ -1,0 +1,43 @@
+/* Session List Styles */
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.session-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-group-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 0.5rem 1rem;
+}
+
+.session-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.session-list-empty p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.empty-hint {
+  margin-top: 0.5rem !important;
+  font-size: 0.75rem !important;
+  opacity: 0.7;
+}
+

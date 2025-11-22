@@ -1,0 +1,98 @@
+/* Assessment Page Styles - Responsive Design */
+.assessment-page {
+  height: 100vh; /* Fixed height - no page scrolling */
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 64px; /* Account for fixed global header (h-16 = 64px) */
+  overflow: hidden; /* Prevent page scrolling */
+}
+
+.assessment-page.dark {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.assessment-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  margin: 0;
+  background: white;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Prevent container scrolling */
+  height: calc(100vh - 64px); /* Full height minus header */
+  min-height: 0; /* Allow flex shrinking */
+}
+
+.assessment-page.dark .assessment-container {
+  background: #2d3748;
+  color: #f7fafc;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loading-container p {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.assessment-page.dark .loading-container p {
+  color: #9ca3af;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.assessment-page.dark .loading-spinner {
+  border-color: #4b5563;
+  border-top-color: #667eea;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .assessment-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .assessment-page {
+    padding-top: 64px; /* Keep padding for fixed header */
+  }
+  
+  .assessment-container {
+    border-radius: 0;
+    height: calc(100vh - 64px);
+  }
+}
+
+@media (max-width: 480px) {
+  .assessment-page {
+    padding-top: 64px; /* Keep padding for fixed header */
+  }
+  
+  .assessment-container {
+    height: calc(100vh - 64px);
+  }
+}
