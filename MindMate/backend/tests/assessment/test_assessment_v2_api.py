@@ -26,7 +26,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.v1.endpoints import assessment_v2
+from app.api.v1.endpoints import assessment
 from app.agents.Assessment.v2.langgraph_agent.state import (
     AssessmentModule,
     AssessmentState,

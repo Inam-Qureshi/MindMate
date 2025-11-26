@@ -16,11 +16,32 @@ import requests
 
 # Load environment variables from backend/.env
 # Path: mood/llm.py -> agents/mood -> agents -> app -> backend
-env_path = Path(__file__).parent.parent.parent.parent / ".env"
-if not env_path.exists():
-    # Try alternative paths
-    env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
-load_dotenv(env_path)
+try:
+    env_path = Path(__file__).parent.parent.parent.parent / ".env"
+    if not env_path.exists():
+        # Try alternative paths
+        env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
+    load_dotenv(env_path)
+except ImportError:
+    # dotenv not available, try to load .env manually
+    try:
+        env_path = Path(__file__).parent.parent.parent.parent / ".env"
+        if not env_path.exists():
+            env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
+
+        if env_path.exists():
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        # Remove quotes if present
+                        value = value.strip('\"\'')
+                        os.environ[key] = value
+            logger.info("Loaded environment variables from .env file manually")
+    except Exception as e:
+        logger.warning(f"Failed to load .env file manually: {e}")
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +50,11 @@ class MoodTrackingLLMClient:
     """LLM Client specialized for mood tracking and assessment"""
     
     def __init__(self, model: str = None, enable_cache: bool = True):
-        # Get model from env - check both GROQ and OPENROUTER
-        self.model = model or os.getenv("GROQ_MODEL") or os.getenv("OPENROUTER_MODEL", "llama-3.1-8b-instant")
+        # Prioritize Groq over OpenRouter (Groq has working API key)
         self.api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENROUTER_API_KEY")
-        
-        # Determine which service to use
+        self.model = model or os.getenv("GROQ_MODEL") or os.getenv("OPENROUTER_MODEL", "llama-3.1-8b-instant")
+
+        # Determine which service to use - prefer Groq
         if os.getenv("GROQ_API_KEY"):
             self.base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
             self.service = "groq"

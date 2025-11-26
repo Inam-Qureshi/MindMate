@@ -5,13 +5,44 @@ Migrated from assessment/database.py
 
 import json
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from contextlib import contextmanager
+from functools import wraps
 
 # Initialize logger first
 logger = logging.getLogger(__name__)
+
+# Transaction management utilities
+@contextmanager
+def db_transaction(db_session: Session):
+    """Database transaction context manager for atomic operations"""
+    try:
+        yield db_session
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        logger.error(f"Database transaction failed: {e}", exc_info=True)
+        raise
+
+def transactional(func: Callable) -> Callable:
+    """Decorator for transactional database operations"""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        db_session = self._get_db_session()
+        if not db_session:
+            logger.warning("Database not available - cannot perform transactional operation")
+            return False
+
+        try:
+            with db_transaction(db_session):
+                return func(self, db_session=db_session, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Transactional operation failed: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Update imports to use assessment_v2 types
 try:
@@ -199,147 +230,120 @@ class ModeratorDatabase:
     # SESSION MANAGEMENT
     # ========================================================================
     
-    def create_session(self, session_state: SessionState, patient_id: str, max_retries: int = 2) -> bool:
+    @transactional
+    def create_session(self, session_state: SessionState, patient_id: str, db_session: Session = None) -> bool:
         """
-        Create a new assessment session with retry logic.
+        Atomically create a new assessment session.
 
         Args:
             session_state: SessionState object
             patient_id: Patient UUID from the main system (string or UUID)
-            max_retries: Maximum number of retry attempts (default: 2)
+            db_session: Database session (provided by transactional decorator)
 
         Returns:
             True if successful, False otherwise
         """
-        for attempt in range(max_retries + 1):
+        # Resolve patient identifier to UUID (supports email fallback)
+        from uuid import UUID
+
+        def _to_uuid(value) -> Optional[UUID]:
+            """Attempt to coerce a value into a UUID."""
+            if not value:
+                return None
             try:
-                db = self._get_db_session()
-                if not db:
-                    logger.warning("Database not available - cannot create session")
-                    return False
+                return UUID(str(value))
+            except (ValueError, TypeError):
+                return None
 
-                # Resolve patient identifier to UUID (supports email fallback)
-                from uuid import UUID
+        resolved_patient_id: Optional[UUID] = _to_uuid(patient_id)
 
-                def _to_uuid(value) -> Optional[UUID]:
-                    """Attempt to coerce a value into a UUID."""
-                    if not value:
-                        return None
-                    try:
-                        return UUID(str(value))
-                    except (ValueError, TypeError):
-                        return None
+        # Collect candidate identifiers for resolution (email, metadata, user_id)
+        if resolved_patient_id is None and DATABASE_AVAILABLE and Patient:
+            candidate_identifiers: List[str] = []
 
-                resolved_patient_id: Optional[UUID] = _to_uuid(patient_id)
+            if isinstance(patient_id, str):
+                candidate_identifiers.append(patient_id.strip())
 
-                # Collect candidate identifiers for resolution (email, metadata, user_id)
-                if resolved_patient_id is None and DATABASE_AVAILABLE and Patient:
-                    candidate_identifiers: List[str] = []
+            if session_state and session_state.metadata:
+                meta_patient = session_state.metadata.get("patient_id")
+                if meta_patient and meta_patient not in candidate_identifiers:
+                    candidate_identifiers.append(str(meta_patient).strip())
 
-                    if isinstance(patient_id, str):
-                        candidate_identifiers.append(patient_id.strip())
+            if session_state and session_state.user_id:
+                user_identifier = str(session_state.user_id).strip()
+                if user_identifier not in candidate_identifiers:
+                    candidate_identifiers.append(user_identifier)
 
-                    if session_state and session_state.metadata:
-                        meta_patient = session_state.metadata.get("patient_id")
-                        if meta_patient and meta_patient not in candidate_identifiers:
-                            candidate_identifiers.append(str(meta_patient).strip())
+            for identifier in candidate_identifiers:
+                if not identifier:
+                    continue
 
-                    if session_state and session_state.user_id:
-                        user_identifier = str(session_state.user_id).strip()
-                        if user_identifier not in candidate_identifiers:
-                            candidate_identifiers.append(user_identifier)
+                candidate_uuid = _to_uuid(identifier)
+                patient_obj = None
 
-                    for identifier in candidate_identifiers:
-                        if not identifier:
-                            continue
+                try:
+                    if candidate_uuid:
+                        patient_obj = db_session.query(Patient).filter(Patient.id == candidate_uuid).first()
+                    else:
+                        patient_obj = db_session.query(Patient).filter(Patient.email == identifier).first()
 
-                        candidate_uuid = _to_uuid(identifier)
-                        patient_obj = None
+                    if not patient_obj:
+                        patient_obj = self.get_patient_by_user_id(identifier)
+                except Exception as lookup_error:
+                    logger.error(f"Error resolving patient identifier '{identifier}': {lookup_error}")
+                    continue
 
-                        try:
-                            if candidate_uuid:
-                                patient_obj = db.query(Patient).filter(Patient.id == candidate_uuid).first()
-                            else:
-                                patient_obj = db.query(Patient).filter(Patient.email == identifier).first()
+                if patient_obj and getattr(patient_obj, "id", None):
+                    resolved_patient_id = _to_uuid(patient_obj.id)
+                    if resolved_patient_id:
+                        logger.debug(
+                            f"Resolved patient identifier '{identifier}' to UUID {resolved_patient_id}"
+                        )
+                        break
 
-                            if not patient_obj:
-                                patient_obj = self.get_patient_by_user_id(identifier)
-                        except Exception as lookup_error:
-                            logger.error(f"Error resolving patient identifier '{identifier}': {lookup_error}")
-                            continue
+        if resolved_patient_id is None:
+            logger.error(f"Invalid patient_id format: {patient_id}")
+            return False
 
-                        if patient_obj and getattr(patient_obj, "id", None):
-                            resolved_patient_id = _to_uuid(patient_obj.id)
-                            if resolved_patient_id:
-                                logger.debug(
-                                    f"Resolved patient identifier '{identifier}' to UUID {resolved_patient_id}"
-                                )
-                                break
+        patient_id = resolved_patient_id
 
-                if resolved_patient_id is None:
-                    logger.error(f"Invalid patient_id format: {patient_id}")
-                    if db:
-                        db.close()
-                    return False
+        # Ensure session metadata carries canonical patient id for future writes
+        if session_state:
+            if session_state.metadata is None:
+                session_state.metadata = {}
+            session_state.metadata["patient_id"] = str(patient_id)
 
-                patient_id = resolved_patient_id
+        # Check if session already exists (handle race conditions)
+        existing = db_session.query(AssessmentSessionModel).filter(
+            AssessmentSessionModel.session_id == session_state.session_id
+        ).first()
 
-                # Ensure session metadata carries canonical patient id for future writes
-                if session_state:
-                    if session_state.metadata is None:
-                        session_state.metadata = {}
-                    session_state.metadata["patient_id"] = str(patient_id)
+        if existing:
+            logger.debug(f"Session {session_state.session_id} already exists in database")
+            # Update cache and return success
+            self._session_cache[session_state.session_id] = session_state
+            return True
 
-                # Check if session already exists (handle race conditions)
-                existing = db.query(AssessmentSessionModel).filter(
-                    AssessmentSessionModel.session_id == session_state.session_id
-                ).first()
-                
-                if existing:
-                    logger.debug(f"Session {session_state.session_id} already exists in database")
-                    if db:
-                        db.close()
-                    # Update cache and return success
-                    self._session_cache[session_state.session_id] = session_state
-                    return True
+        # Create session model atomically
+        session_model = AssessmentSessionModel(
+            session_id=session_state.session_id,
+            patient_id=patient_id,
+            user_id=session_state.user_id,
+            current_module=session_state.current_module,
+            module_history=session_state.module_history,
+            started_at=session_state.started_at,
+            updated_at=session_state.updated_at,
+            is_complete=session_state.is_complete,
+            metadata=session_state.metadata
+        )
 
-                # Create session model
-                session_model = AssessmentSessionModel(
-                    session_id=session_state.session_id,
-                    patient_id=patient_id,
-                    user_id=session_state.user_id,
-                    current_module=session_state.current_module,
-                    module_history=session_state.module_history,
-                    started_at=session_state.started_at,
-                    updated_at=session_state.updated_at,
-                    is_complete=session_state.is_complete,
-                    metadata=session_state.metadata
-                )
+        db_session.add(session_model)
 
-                db.add(session_model)
-                db.commit()
-                db.close()
+        # Update cache
+        self._session_cache[session_state.session_id] = session_state
 
-                # Update cache
-                self._session_cache[session_state.session_id] = session_state
-
-                logger.info(f"Created session {session_state.session_id} for patient {patient_id}")
-                return True
-
-            except Exception as e:
-                if 'db' in locals() and db:
-                    db.rollback()
-                    db.close()
-                
-                if attempt < max_retries:
-                    logger.warning(f"Error creating session (attempt {attempt + 1}/{max_retries + 1}): {e}. Retrying...")
-                    import time
-                    time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-                else:
-                    logger.error(f"Error creating session after {max_retries + 1} attempts: {e}", exc_info=True)
-                    return False
-        
-        return False
+        logger.info(f"Created session {session_state.session_id} for patient {patient_id}")
+        return True
 
     def get_session(self, session_id: str) -> Optional[SessionState]:
         """
@@ -436,76 +440,68 @@ class ModeratorDatabase:
                 db.close()
             return None
 
-    def update_session(self, session_state: SessionState, max_retries: int = 2) -> bool:
+    @transactional
+    def update_session(self, session_state: SessionState, db_session: Session = None) -> bool:
         """
-        Update session state in database with retry logic.
+        Atomically update session state in database with optimistic locking.
 
         Args:
             session_state: SessionState object
-            max_retries: Maximum number of retry attempts (default: 2)
+            db_session: Database session (provided by transactional decorator)
 
         Returns:
             True if successful, False otherwise
+
+        Raises:
+            ConcurrentModificationError: If version conflict detected
         """
-        for attempt in range(max_retries + 1):
-            try:
-                db = self._get_db_session()
-                if not db:
-                    logger.warning("Database not available - cannot update session")
-                    return False
+        # Get session model with version check
+        session_model = db_session.query(AssessmentSessionModel).filter(
+            AssessmentSessionModel.session_id == session_state.session_id
+        ).first()
 
-                # Get session model
-                session_model = db.query(AssessmentSessionModel).filter(
-                    AssessmentSessionModel.session_id == session_state.session_id
-                ).first()
+        if not session_model:
+            # Session doesn't exist - try to create it
+            logger.debug(f"Session not found in database, attempting to create: {session_state.session_id}")
 
-                if not session_model:
-                    # Session doesn't exist - try to create it
-                    logger.debug(f"Session not found in database, attempting to create: {session_state.session_id}")
-                    if db:
-                        db.close()
-                    
-                    # Try to get patient_id from metadata
-                    patient_id = None
-                    if session_state.metadata:
-                        patient_id = session_state.metadata.get("patient_id")
-                    if not patient_id:
-                        patient_id = session_state.user_id
-                    
-                    # Create session (with retry logic)
-                    return self.create_session(session_state, patient_id, max_retries=max_retries)
+            # Try to get patient_id from metadata
+            patient_id = None
+            if session_state.metadata:
+                patient_id = session_state.metadata.get("patient_id")
+            if not patient_id:
+                patient_id = session_state.user_id
 
-                # Update session model
-                session_model.current_module = session_state.current_module
-                session_model.module_history = session_state.module_history
-                session_model.updated_at = datetime.now()
-                session_model.completed_at = session_state.completed_at
-                session_model.is_complete = session_state.is_complete
-                session_model.metadata = session_state.metadata
+            # Create session (will also be transactional)
+            return self.create_session(session_state, patient_id)
 
-                db.commit()
-                db.close()
+        # Optimistic locking: check if version matches
+        if hasattr(session_model, 'version'):
+            current_version = getattr(session_model, 'version', 0)
+            if current_version != session_state.version:
+                logger.warning(f"Version conflict for session {session_state.session_id}: expected {session_state.version}, got {current_version}")
+                # Create custom exception for concurrent modification
+                class ConcurrentModificationError(Exception):
+                    pass
+                raise ConcurrentModificationError(f"Session {session_state.session_id} was modified by another request")
 
-                # Update cache
-                self._session_cache[session_state.session_id] = session_state
+        # Update session model atomically
+        session_model.current_module = session_state.current_module
+        session_model.module_history = session_state.module_history
+        session_model.updated_at = datetime.now()
+        session_model.completed_at = session_state.completed_at
+        session_model.is_complete = session_state.is_complete
+        session_model.metadata = session_state.metadata
 
-                logger.debug(f"Updated session {session_state.session_id}")
-                return True
+        # Increment version for optimistic locking
+        if hasattr(session_model, 'version'):
+            session_model.version = session_state.version + 1
+            session_state.version = session_model.version
 
-            except Exception as e:
-                if 'db' in locals() and db:
-                    db.rollback()
-                    db.close()
-                
-                if attempt < max_retries:
-                    logger.warning(f"Error updating session (attempt {attempt + 1}/{max_retries + 1}): {e}. Retrying...")
-                    import time
-                    time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-                else:
-                    logger.error(f"Error updating session after {max_retries + 1} attempts: {e}", exc_info=True)
-                    return False
-        
-        return False
+        # Update cache
+        self._session_cache[session_state.session_id] = session_state
+
+        logger.debug(f"Updated session {session_state.session_id} (version {session_state.version})")
+        return True
 
     def save_module_state(self, session_id: str, module_name: str, state: Dict[str, Any]) -> bool:
         """
@@ -556,75 +552,59 @@ class ModeratorDatabase:
                 db.close()
             return False
 
-    def save_module_result(self, session_id: str, module_name: str, result: Dict[str, Any]) -> bool:
+    @transactional
+    def save_module_result(self, session_id: str, module_name: str, result: Dict[str, Any], db_session: Session = None) -> bool:
         """
-        Save module result to database.
+        Atomically save module result to database.
 
         Args:
             session_id: Session identifier
             module_name: Module name
             result: Result data
+            db_session: Database session (provided by transactional decorator)
 
         Returns:
             True if successful, False otherwise
         """
-        try:
-            db = self._get_db_session()
-            if not db:
-                logger.warning("Database not available - cannot save module result")
-                return False
+        # Get session model first to get the UUID
+        session_model = db_session.query(AssessmentSessionModel).filter(
+            AssessmentSessionModel.session_id == session_id
+        ).first()
 
-            # Get session model first to get the UUID
-            session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
-            ).first()
-            
-            if not session_model:
-                logger.warning(f"Session not found: {session_id}")
-                db.close()
-                return False
-            
-            # Get patient_id from session_model (required for AssessmentModuleResult)
-            patient_id = session_model.patient_id
-            if not patient_id:
-                logger.error(f"Session {session_id} has no patient_id - cannot save module result")
-                db.close()
-                return False
-            
-            # Get or create module result using session model ID
-            module_result = db.query(AssessmentModuleResultModel).filter(
-                AssessmentModuleResultModel.session_id == session_model.id,
-                AssessmentModuleResultModel.module_name == module_name
-            ).first()
-
-            if module_result:
-                module_result.results_data = result
-                module_result.updated_at = datetime.now()
-                # Ensure patient_id is set (in case it was missing before)
-                if not module_result.patient_id:
-                    module_result.patient_id = patient_id
-            else:
-                module_result = AssessmentModuleResultModel(
-                    session_id=session_model.id,  # Use session model ID (UUID)
-                    patient_id=patient_id,  # Required field - get from session
-                    module_name=module_name,
-                    results_data=result,  # Field name is results_data, not result_data
-                    updated_at=datetime.now()
-                )
-                db.add(module_result)
-
-            db.commit()
-            db.close()
-
-            logger.debug(f"Saved module result for {module_name} in session {session_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error saving module result: {e}", exc_info=True)
-            if 'db' in locals():
-                db.rollback()
-                db.close()
+        if not session_model:
+            logger.warning(f"Session not found: {session_id}")
             return False
+
+        # Get patient_id from session_model (required for AssessmentModuleResult)
+        patient_id = session_model.patient_id
+        if not patient_id:
+            logger.error(f"Session {session_id} has no patient_id - cannot save module result")
+            return False
+
+        # Get or create module result using session model ID
+        module_result = db_session.query(AssessmentModuleResultModel).filter(
+            AssessmentModuleResultModel.session_id == session_model.id,
+            AssessmentModuleResultModel.module_name == module_name
+        ).first()
+
+        if module_result:
+            module_result.results_data = result
+            module_result.updated_at = datetime.now()
+            # Ensure patient_id is set (in case it was missing before)
+            if not module_result.patient_id:
+                module_result.patient_id = patient_id
+        else:
+            module_result = AssessmentModuleResultModel(
+                session_id=session_model.id,  # Use session model ID (UUID)
+                patient_id=patient_id,  # Required field - get from session
+                module_name=module_name,
+                results_data=result,  # Field name is results_data, not result_data
+                updated_at=datetime.now()
+            )
+            db_session.add(module_result)
+
+        logger.debug(f"Saved module result for {module_name} in session {session_id}")
+        return True
 
     def delete_session(self, session_id: str) -> bool:
         """
@@ -1201,6 +1181,15 @@ class ModeratorDatabase:
                 logger.error(f"Session not found: {session_id}")
                 db.close()
                 return False
+            
+            # Extract patient_id from session if not provided
+            if patient_id is None:
+                patient_id = session_model.patient_id
+                if patient_id is None:
+                    logger.error(f"Session {session_id} has no patient_id and patient_id was not provided")
+                    db.close()
+                    return False
+                logger.debug(f"Extracted patient_id {patient_id} from session {session_id}")
             
             # Ensure patient_id is UUID format
             from uuid import UUID

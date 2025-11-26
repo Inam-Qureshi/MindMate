@@ -37,7 +37,11 @@ class LLMResponseParser:
         Args:
             llm_client: LLM client instance (if None, creates new one)
         """
-        self.llm_client = llm_client or LLMClient(enable_cache=True)
+        try:
+            self.llm_client = llm_client or LLMClient(enable_cache=True, verify_connection=False)
+        except Exception as e:
+            logger.warning(f"Failed to initialize LLMClient: {e}. LLM parsing will be disabled.")
+            self.llm_client = None
         self.system_prompt = self._get_system_prompt()
     
     def _get_system_prompt(self) -> str:
@@ -80,6 +84,11 @@ Return ONLY valid JSON - no additional text, no markdown code blocks, just the J
         Returns:
             ProcessedResponse with extracted information
         """
+        # Check if LLM client is available
+        if not self.llm_client:
+            logger.warning("LLM client not available, using fallback parsing")
+            return self._fallback_parse_response(user_response, question)
+        
         try:
             # Build comprehensive, data-driven prompt for LLM
             prompt = self._build_parsing_prompt(
@@ -235,31 +244,35 @@ Your task is to extract structured information from user responses.
             
         except Exception as e:
             logger.error(f"Error parsing response with LLM: {e}")
-            # Try to infer from user response as fallback
-            selected_option = None
-            if question.response_type == ResponseType.YES_NO and user_response:
-                user_lower = user_response.lower().strip()
-                if user_lower in ["no", "nope", "never", "not", "n"] or user_lower.startswith("no "):
-                    selected_option = "no"
-                elif user_lower in ["yes", "yeah", "yep", "y"] or user_lower.startswith("yes "):
-                    selected_option = "yes"
-            
-            # Return fallback response (already normalized)
-            fallback_free_text = self._normalize_parsed_strings({"error": str(e)})
-            fallback_validation = self._normalize_parsed_strings({
-                "is_valid": True,
-                "needs_clarification": True,
-                "suggested_clarification": "could you provide more details?"
-            })
-            return ProcessedResponse(
-                selected_option=selected_option,  # Already lowercase if set
-                extracted_fields={},
-                confidence=0.5,
-                dsm_criteria_mapping={},
-                free_text_analysis=fallback_free_text,
-                validation=fallback_validation,
-                raw_response=user_response
-            )
+            return self._fallback_parse_response(user_response, question, error=str(e))
+    
+    def _fallback_parse_response(self, user_response: str, question: SCIDQuestion, error: str = None) -> ProcessedResponse:
+        """Fallback parsing when LLM is not available or fails"""
+        # Try to infer from user response as fallback
+        selected_option = None
+        if question.response_type == ResponseType.YES_NO and user_response:
+            user_lower = user_response.lower().strip()
+            if user_lower in ["no", "nope", "never", "not", "n"] or user_lower.startswith("no "):
+                selected_option = "no"
+            elif user_lower in ["yes", "yeah", "yep", "y"] or user_lower.startswith("yes "):
+                selected_option = "yes"
+        
+        # Return fallback response (already normalized)
+        fallback_free_text = self._normalize_parsed_strings({"error": error or "LLM not available", "fallback": True})
+        fallback_validation = self._normalize_parsed_strings({
+            "is_valid": True,
+            "needs_clarification": True,
+            "suggested_clarification": "could you provide more details?"
+        })
+        return ProcessedResponse(
+            selected_option=selected_option,  # Already lowercase if set
+            extracted_fields={},
+            confidence=0.5,
+            dsm_criteria_mapping={},
+            free_text_analysis=fallback_free_text,
+            validation=fallback_validation,
+            raw_response=user_response
+        )
     
     def _build_parsing_prompt(
         self,

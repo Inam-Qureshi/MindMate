@@ -74,18 +74,35 @@ class ModuleProgress:
 @dataclass
 class SessionState:
     """State of an assessment session"""
-    session_id: str
-    user_id: str
-    current_module: Optional[str] = None
-    module_history: List[str] = field(default_factory=list)
-    module_states: Dict[str, Any] = field(default_factory=dict)
-    module_results: Dict[str, Any] = field(default_factory=dict)
-    started_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
-    is_complete: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    current_metadata: Dict[str, Any] = field(default_factory=dict)
+    def __init__(
+        self,
+        session_id: str,
+        user_id: str,
+        version: int = 0,  # Version for optimistic locking
+        current_module: Optional[str] = None,
+        module_history: Optional[List[str]] = None,
+        module_states: Optional[Dict[str, Any]] = None,
+        module_results: Optional[Dict[str, Any]] = None,
+        started_at: Optional[datetime] = None,
+        updated_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+        is_complete: bool = False,
+        metadata: Optional[Dict[str, Any]] = None,
+        current_metadata: Optional[Dict[str, Any]] = None,
+    ):
+        self.session_id = session_id
+        self.user_id = user_id
+        self.version = version
+        self.current_module = current_module
+        self.module_history = module_history or []
+        self.module_states = module_states or {}
+        self.module_results = module_results or {}
+        self.started_at = started_at or datetime.now()
+        self.updated_at = updated_at or datetime.now()
+        self.completed_at = completed_at
+        self.is_complete = is_complete
+        self.metadata = metadata or {}
+        self.current_metadata = current_metadata or {}
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -100,7 +117,8 @@ class SessionState:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "is_complete": self.is_complete,
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "version": self.version
         }
 
 

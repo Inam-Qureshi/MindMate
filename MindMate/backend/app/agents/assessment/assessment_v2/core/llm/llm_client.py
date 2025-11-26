@@ -30,8 +30,43 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
-env_path = Path(__file__).parent.parent.parent.parent.parent.parent / ".env"
-load_dotenv(env_path)
+try:
+    env_path = Path(__file__).parent.parent.parent.parent.parent.parent / ".env"
+    load_dotenv(env_path)
+except ImportError:
+    # dotenv not available, try to load .env manually
+    try:
+        env_path = Path(__file__).parent.parent.parent.parent.parent.parent / ".env"
+        if env_path.exists():
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        # Remove quotes if present
+                        value = value.strip('\"\'')
+                        os.environ[key] = value
+            logger.info("Loaded environment variables from .env file manually")
+    except Exception as e:
+        logger.warning(f"Failed to load .env file manually: {e}")
+        pass
+except Exception:
+    # path issues, try manual loading
+    try:
+        env_path = Path(__file__).parent.parent.parent.parent.parent.parent / ".env"
+        if env_path.exists():
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        # Remove quotes if present
+                        value = value.strip('\"\'')
+                        os.environ[key] = value
+            logger.info("Loaded environment variables from .env file manually")
+    except Exception as e:
+        logger.warning(f"Failed to load .env file manually: {e}")
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -190,38 +225,48 @@ class LLMWrapper:
     
     def _load_config(self) -> LLMConfig:
         """Load configuration from environment variables"""
-        # Default base URL for Groq (without /openai/v1 path)
-        default_base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com")
-        
+        # Prioritize Groq over OpenRouter
+        api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENROUTER_API_KEY", "")
+        service = "groq" if os.getenv("GROQ_API_KEY") else "openrouter"
+
+        if service == "groq":
+            default_base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com")
+            default_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+            rate_limit = int(os.getenv("GROQ_RATE_LIMIT", "20"))
+        else:  # openrouter
+            default_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+            default_model = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-pro-exp-03-25:free")
+            rate_limit = int(os.getenv("OPENROUTER_RATE_LIMIT", "20"))
+
         # Normalize base URL - remove any existing /openai/v1 or /v1 paths
         # and ensure it's just the base domain
         default_base_url = default_base_url.rstrip("/")
-        
+
         # Remove any existing API paths that might cause duplication
         if "/openai/v1" in default_base_url:
-            default_base_url = default_base_url.split("/openai/v1")[0]
+            default_base_url = default_base_url.split("/openai/v1")[0].rstrip("/")
         elif default_base_url.endswith("/v1"):
-            default_base_url = default_base_url[:-3]
-        
-        # Ensure it's just the base domain (e.g., https://api.groq.com)
+            default_base_url = default_base_url[:-3].rstrip("/")
+
+        # Ensure it's just the base domain (e.g., https://api.groq.com or https://openrouter.ai/api/v1)
         default_base_url = default_base_url.rstrip("/")
-        
+
         return LLMConfig(
-            model=os.getenv("GROQ_MODEL", "qwen/qwen3-32b"),
-            api_key=os.getenv("GROQ_API_KEY", ""),
+            model=os.getenv("OPENROUTER_MODEL") or os.getenv("GROQ_MODEL", default_model),
+            api_key=api_key,
             base_url=default_base_url,
-            max_tokens=int(os.getenv("GROQ_MAX_TOKENS", "800")),
-            temperature=float(os.getenv("GROQ_TEMPERATURE", "0.7")),
-            timeout=int(os.getenv("GROQ_TIMEOUT", "30")),
-            max_retries=int(os.getenv("GROQ_MAX_RETRIES", "2")),
-            enable_cache=os.getenv("GROQ_ENABLE_CACHE", "true").lower() == "true",
-            rate_limit_per_minute=int(os.getenv("GROQ_RATE_LIMIT", "20"))
+            max_tokens=int(os.getenv("OPENROUTER_MAX_TOKENS") or os.getenv("GROQ_MAX_TOKENS", "800")),
+            temperature=float(os.getenv("OPENROUTER_TEMPERATURE") or os.getenv("GROQ_TEMPERATURE", "0.7")),
+            timeout=int(os.getenv("OPENROUTER_TIMEOUT") or os.getenv("GROQ_TIMEOUT", "30")),
+            max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES") or os.getenv("GROQ_MAX_RETRIES", "2")),
+            enable_cache=os.getenv("OPENROUTER_ENABLE_CACHE") or os.getenv("GROQ_ENABLE_CACHE", "true").lower() == "true",
+            rate_limit_per_minute=rate_limit
         )
     
     def _make_api_call(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """Make API call to LLM service with improved error handling"""
         if not self.config.api_key:
-            raise ValueError("API key not configured - set GROQ_API_KEY environment variable")
+            raise ValueError("API key not configured - set OPENROUTER_API_KEY or GROQ_API_KEY environment variable")
         
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
@@ -262,7 +307,9 @@ class LLMWrapper:
             )
             
             if response.status_code == 401:
-                raise ValueError("Invalid API key - check GROQ_API_KEY environment variable")
+                service_name = "OpenRouter" if "openrouter.ai" in self.config.base_url else "Groq"
+                service_url = "https://openrouter.ai/keys" if "openrouter.ai" in self.config.base_url else "https://console.groq.com/keys"
+                raise ValueError(f"Invalid API key - check {service_name}_API_KEY environment variable at {service_url}")
             elif response.status_code == 429:
                 raise Exception("Rate limit exceeded - too many requests")
             elif response.status_code == 500:

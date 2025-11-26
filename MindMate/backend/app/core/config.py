@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     SUPER_ADMIN_EMAIL: Optional[str] = None
     SUPER_ADMIN_PASSWORD: Optional[str] = None
     
+    # LLM API Settings (Optional - for assessment features)
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: Optional[str] = None
+    
     @property
     def allowed_origins_list(self) -> List[str]:
         """Parse ALLOWED_ORIGINS string to list."""

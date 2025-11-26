@@ -457,8 +457,9 @@ class AssessmentModerator:
             # Get session state
             session_state = self.get_session_state(session_id)
             if not session_state:
-                # Create new session if doesn't exist
-                return self.start_assessment(user_id, session_id)
+                # Don't create session implicitly - require explicit /start call
+                logger.warning(f"Session {session_id} not found - user must start assessment first")
+                return "Session not found. Please start a new assessment session first."
             
             # Get current module
             current_module_name = session_state.current_module
@@ -478,8 +479,14 @@ class AssessmentModerator:
                 try:
                     self.db.update_session(session_state)
                 except Exception as e:
-                    logger.debug(f"Could not update session in database: {e}")
-                    # Continue even if database update fails
+                    error_msg = str(e)
+                    if "ConcurrentModificationError" in error_msg or "was modified by another request" in error_msg:
+                        logger.warning(f"Concurrent modification detected for session {session_state.session_id}: {e}")
+                        return "Another request is processing this session. Please wait and try again."
+                    else:
+                        logger.error(f"CRITICAL: Failed to persist session update for {session_state.session_id}: {e}", exc_info=True)
+                        # Continue processing but session state may be inconsistent
+                        # TODO: Consider notifying user about persistence issues
             
             # Check if module is complete
             # Priority: response.is_complete (from ModuleResponse) takes precedence
@@ -489,11 +496,12 @@ class AssessmentModerator:
                 try:
                     module_complete = module.is_complete(session_id)
                 except Exception as e:
-                    logger.debug(f"Error checking module completion: {e}")
-                    module_complete = False
+                    logger.error(f"Failed to check module completion for {current_module_name}: {e}", exc_info=True)
+                    module_complete = False  # Default to incomplete on error
             
             if module_complete:
-                # Store module results before transitioning
+                # Store and persist module results BEFORE transitioning
+                module_results = None
                 try:
                     if hasattr(module, 'get_results'):
                         module_results = module.get_results(session_id)
@@ -501,9 +509,20 @@ class AssessmentModerator:
                             if not session_state.module_results:
                                 session_state.module_results = {}
                             session_state.module_results[current_module_name] = module_results
+
+                            # Persist module results to database immediately
+                            if hasattr(self, 'db') and self.db:
+                                try:
+                                    self.db.save_module_result(session_id, current_module_name, module_results)
+                                    logger.debug(f"Persisted results for module {current_module_name}")
+                                except Exception as persist_error:
+                                    logger.warning(f"Failed to persist module results for {current_module_name}: {persist_error}")
+                                    # Continue with transition even if persistence fails - assessment should work without database
+                                    logger.info(f"Continuing assessment despite persistence failure for {current_module_name}")
                 except Exception as e:
-                    logger.debug(f"Could not store module results: {e}")
-                
+                    logger.error(f"Failed to get/store module results for {current_module_name}: {e}", exc_info=True)
+                    # Continue with transition but without results
+
                 self._mark_module_completed(session_state, current_module_name)
                 if current_module_name not in session_state.module_history:
                     session_state.module_history.append(current_module_name)
@@ -512,12 +531,17 @@ class AssessmentModerator:
                 next_module = self._determine_next_module(current_module_name, session_state)
                 
                 if next_module and next_module in self.modules:
+                    # Validate prerequisites before starting the module
+                    if not self._validate_module_prerequisites(next_module, session_state):
+                        logger.warning(f"Prerequisites not met for module {next_module} in session {session_id}")
+                        return f"Cannot proceed to {next_module} until all required assessments are complete. Please complete the remaining diagnostic modules first."
+
                     session_state.current_module = next_module
                     self._mark_module_started(session_state, next_module)
-                    
+
                     # Create smooth transition message
                     transition_message = self._create_transition_message(current_module_name, next_module)
-                    
+
                     # Start next module (this will trigger selector activation for SCID modules)
                     next_module_instance = self.modules[next_module]
                     
@@ -572,8 +596,24 @@ class AssessmentModerator:
         return session_state.current_module if session_state else None
     
     def get_session_state(self, session_id: str) -> Optional[SessionState]:
-        """Get session state for a session"""
-        return self.sessions.get(session_id)
+        """Get session state for a session with database fallback"""
+        # Check cache first
+        session_state = self.sessions.get(session_id)
+        if session_state:
+            return session_state
+        
+        # Fallback to database
+        if hasattr(self, 'db') and self.db:
+            try:
+                session_state = self.db.get_session(session_id)
+                if session_state:
+                    # Warm the cache
+                    self.sessions[session_id] = session_state
+                    return session_state
+            except Exception as e:
+                logger.error(f"Failed to load session from database: {e}")
+        
+        return None
     
     def get_session_progress(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get progress information for a session"""
@@ -886,7 +926,13 @@ class AssessmentModerator:
             Next module name or None if no next module
         """
         # Diagnostic modules that must complete before DA
-        diagnostic_modules = ["scid_screening", "scid_cv_diagnostic"]
+        # This includes screening and all specific diagnostic modules
+        diagnostic_modules = [
+            "scid_screening", "scid_cv_diagnostic",
+            "mdd", "bipolar", "gad", "panic", "ptsd", "ocd", "adhd",
+            "social_anxiety", "agoraphobia", "specific_phobia",
+            "adjustment_disorder", "alcohol_use", "substance_use", "eating_disorder"
+        ]
         
         # If we're completing a diagnostic module, check if all are complete
         if current_module in diagnostic_modules:
@@ -998,7 +1044,35 @@ class AssessmentModerator:
                 logger.warning(f"Error checking completion for {module_name}: {e}")
         
         return False
-    
+
+    def _validate_module_prerequisites(self, module_name: str, session_state: SessionState) -> bool:
+        """
+        Validate that all prerequisites are met before starting a module.
+
+        Args:
+            module_name: Module to validate prerequisites for
+            session_state: Current session state
+
+        Returns:
+            True if prerequisites are met, False otherwise
+        """
+        if module_name == "da_diagnostic_analysis":
+            # DA requires all diagnostic modules to be complete
+            diagnostic_modules = [
+                "scid_screening", "scid_cv_diagnostic",
+                "mdd", "bipolar", "gad", "panic", "ptsd", "ocd", "adhd",
+                "social_anxiety", "agoraphobia", "specific_phobia",
+                "adjustment_disorder", "alcohol_use", "substance_use", "eating_disorder"
+            ]
+            return self._check_all_diagnostic_modules_complete(session_state, diagnostic_modules)
+
+        elif module_name == "tpa_treatment_planning":
+            # TPA requires DA to be complete
+            return self._check_module_complete("da_diagnostic_analysis", session_state)
+
+        # No prerequisites for other modules
+        return True
+
     def _create_transition_message(self, from_module: str, to_module: str) -> str:
         """Create a smooth transition message between modules with context about selectors"""
         transitions = {

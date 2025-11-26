@@ -115,8 +115,9 @@ class SRAService:
                     llm_symptoms = self._extract_symptoms_llm(user_response, question, conversation_history)
                 except Exception as e:
                     logger.warning(f"LLM symptom extraction failed: {e}")
-            
-            # Merge symptoms (prioritize LLM if available)
+                    # Continue with rule-based only if LLM fails
+
+            # Merge symptoms (prioritize LLM if available, fallback to rule-based)
             all_symptoms = llm_symptoms if llm_symptoms else rule_based_symptoms
             
             # Extract attributes from processed response
@@ -337,19 +338,59 @@ Extract symptoms and their attributes. Return JSON array:"""
         start_idx = response_text.find('[')
         end_idx = response_text.rfind(']')
         
-        if start_idx >= 0 and end_idx > start_idx:
-            response_text = response_text[start_idx:end_idx + 1]
-        elif start_idx >= 0:
-            # Found [ but no ], try to find matching ]
-            brace_count = 0
-            for i, char in enumerate(response_text[start_idx:], start_idx):
-                if char == '[':
-                    brace_count += 1
-                elif char == ']':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        response_text = response_text[start_idx:i+1]
-                        break
+        # Check if there's a leading empty array followed by objects
+        # Handle cases like: []\n{...} or [] {...} or [], {...}
+        if start_idx >= 0:
+            # Check if it starts with an empty array
+            if response_text[start_idx:start_idx+2] == "[]":
+                # Look for objects after the empty array
+                remaining_text = response_text[start_idx + 2:].strip()
+                # Remove leading comma, newline, or whitespace
+                remaining_text = remaining_text.lstrip(',\n\r\t ')
+                
+                # Try to extract all JSON objects from remaining text
+                objects = []
+                brace_count = 0
+                start_obj = -1
+                
+                for i, char in enumerate(remaining_text):
+                    if char == '{':
+                        if brace_count == 0:
+                            start_obj = i
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0 and start_obj >= 0:
+                            obj_text = remaining_text[start_obj:i+1]
+                            # Validate it's a valid JSON object
+                            try:
+                                json.loads(obj_text)  # Quick validation
+                                objects.append(obj_text)
+                            except json.JSONDecodeError:
+                                pass  # Skip invalid objects
+                            start_obj = -1
+                
+                if objects:
+                    # Reconstruct as proper JSON array
+                    response_text = '[' + ','.join(objects) + ']'
+                    logger.debug(f"Reconstructed JSON array from {len(objects)} objects after removing leading empty array")
+                else:
+                    # No valid objects found, return empty array
+                    response_text = '[]'
+            elif start_idx >= 0 and end_idx > start_idx:
+                # Normal case: extract the array
+                response_text = response_text[start_idx:end_idx + 1]
+            elif start_idx >= 0:
+                # Found [ but no ], try to find matching ]
+                brace_count = 0
+                for i, char in enumerate(response_text[start_idx:], start_idx):
+                    if char == '[':
+                        brace_count += 1
+                    elif char == ']':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            response_text = response_text[start_idx:i+1]
+                            break
         elif '{' in response_text and '}' in response_text:
             # No array brackets, but might be a single object or multiple objects
             # Try to extract objects

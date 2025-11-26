@@ -38,6 +38,16 @@ except ImportError as e:
     SessionState = None
     ASSESSMENT_MODULES_AVAILABLE = False
 
+# Import fallback system (always available)
+try:
+    from app.agents.assessment.assessment_v2.fallback_system import get_fallback_system, AssessmentFallbackSystem
+    FALLBACK_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Fallback system not available: {e}")
+    get_fallback_system = None
+    AssessmentFallbackSystem = None
+    FALLBACK_AVAILABLE = False
+
 # Initialize router
 router = APIRouter(prefix="/assessment-v2", tags=["Assessment"])
 security = HTTPBearer()
@@ -120,7 +130,7 @@ def is_assessment_available() -> bool:
 def get_moderator_safe() -> Optional[AssessmentModerator]:
     """
     Safely get moderator instance, returning None if unavailable.
-    
+
     Returns:
         AssessmentModerator instance or None if unavailable
     """
@@ -128,6 +138,45 @@ def get_moderator_safe() -> Optional[AssessmentModerator]:
         return get_moderator()
     except Exception:
         return None
+
+def get_assessment_system() -> Tuple[Any, bool]:
+    """
+    Get the assessment system to use (main or fallback).
+
+    Returns:
+        Tuple of (system_instance, is_fallback)
+        - system_instance: AssessmentModerator or AssessmentFallbackSystem
+        - is_fallback: True if using fallback system, False if using main system
+    """
+    # Try main assessment system first
+    try:
+        moderator = get_moderator()
+        if moderator is not None:
+            logger.info("Using main assessment system")
+            return moderator, False
+    except Exception as e:
+        logger.warning(f"Main assessment system failed to initialize: {e}")
+
+    # Fall back to fallback system if main system unavailable
+    logger.info("Main assessment system unavailable, using fallback system")
+    if FALLBACK_AVAILABLE and get_fallback_system is not None:
+        return get_fallback_system(), True
+
+    # No system available
+    raise RuntimeError("No assessment system available (neither main nor fallback)")
+
+def handle_assessment_unavailable() -> Dict[str, Any]:
+    """
+    Handle case when assessment system is completely unavailable.
+
+    Returns:
+        Error info dict
+    """
+    return {
+        "message": "Assessment system is currently unavailable due to technical issues. Please try again later or contact support.",
+        "error_type": "system_unavailable",
+        "fallback_available": FALLBACK_AVAILABLE
+    }
 
 # Load and mount agent routers (DA, SRA, TPA) under assessment
 # NOTE: Router imports are disabled as routers were removed during cleanup.
@@ -148,44 +197,78 @@ tpa_router = None
 # HELPER FUNCTIONS
 # ============================================================================
 
-def extract_user_id(current_user_data) -> Optional[str]:
+def get_patient_id(current_user_data, require_patient_type: bool = False) -> Optional[str]:
     """
-    Extract canonical patient UUID from current_user_data.
-    
+    Unified patient ID extraction from user data.
+
     Args:
-        current_user_data: Current user data dict from get_current_user_from_token
-                           Format: {"user": user_obj, "auth_info": auth_info, "user_type": str}
-        
+        current_user_data: User data from authentication
+        require_patient_type: If True, validates user is a patient type
+
     Returns:
-        Patient UUID string or None if not found.
+        Validated patient UUID string or None
+
+    Raises:
+        HTTPException: If require_patient_type=True and user is not a patient
+        ValueError: If user data is invalid
     """
-    patient_uuid = get_patient_uuid(current_user_data)
-    if patient_uuid:
-        return patient_uuid
-    
-    # Explicitly inspect attributes for UUID values before giving up
     import uuid
-    potential_ids = []
-    
+    from app.db.session import SessionLocal
+
+    if not current_user_data:
+        return None
+
+    # Validate user type if required
+    if require_patient_type:
+        user_type = extract_user_type(current_user_data)
+        if user_type != "patient":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Assessment endpoints are only available for patients"
+            )
+
+    # Handle dict format
     if isinstance(current_user_data, dict):
         user = current_user_data.get("user")
-        if user and hasattr(user, "id"):
-            potential_ids.append(str(user.id))
-        if current_user_data.get("user_id"):
-            potential_ids.append(str(current_user_data.get("user_id")))
-    else:
-        if hasattr(current_user_data, "id"):
-            potential_ids.append(str(current_user_data.id))
-        if hasattr(current_user_data, "user_id"):
-            potential_ids.append(str(current_user_data.user_id))
-    
-    for candidate in potential_ids:
+        if user and hasattr(user, 'id'):
+            candidate = str(user.id)
+        else:
+            candidate = current_user_data.get("user_id")
+
+        if candidate:
+            try:
+                # Validate UUID format
+                uuid.UUID(str(candidate))
+                return str(candidate)
+            except ValueError:
+                logger.warning(f"Invalid UUID format: {candidate}")
+
+        # Fallback: lookup by email
+        email = None
+        if user and hasattr(user, 'email'):
+            email = user.email
+        elif current_user_data.get("email"):
+            email = current_user_data.get("email")
+
+        if email:
+            # Database lookup for patient by email
+            try:
+                db = SessionLocal()
+                patient = db.query(Patient).filter(Patient.email == email).first()
+                db.close()
+                if patient:
+                    return str(patient.id)
+            except Exception as e:
+                logger.error(f"Failed to lookup patient by email: {e}")
+
+    # Handle object format
+    elif hasattr(current_user_data, 'id'):
         try:
-            uuid.UUID(str(candidate))
-            return str(candidate)
-        except (ValueError, TypeError):
-            continue
-    
+            uuid.UUID(str(current_user_data.id))
+            return str(current_user_data.id)
+        except ValueError:
+            pass
+
     return None
 
 def extract_user_type(current_user_data) -> Optional[str]:
@@ -205,35 +288,16 @@ def extract_user_type(current_user_data) -> Optional[str]:
         return current_user_data.user_type
     return None
 
+# DEPRECATED: Use get_patient_id(require_patient_type=True) instead
 def validate_patient_access(current_user_data) -> str:
-    """
-    Validate that the current user is a patient and extract patient UUID.
-
-    Args:
-        current_user_data: Current user data dict from get_current_user_from_token
-                           Format: {"user": user_obj, "auth_info": auth_info, "user_type": str}
-
-    Returns:
-        Patient UUID string
-
-    Raises:
-        HTTPException: If user is not a patient or user ID not found
-    """
-    user_type = extract_user_type(current_user_data)
-    if user_type != "patient":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Assessment endpoints are only available for patients"
-        )
-
-    patient_uuid = extract_user_id(current_user_data)
-    if not patient_uuid:
+    """DEPRECATED: Use get_patient_id(current_user_data, require_patient_type=True) instead"""
+    patient_id = get_patient_id(current_user_data, require_patient_type=True)
+    if not patient_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Patient UUID not found in authentication"
         )
-
-    return patient_uuid
+    return patient_id
 
 def validate_questionnaire_completion(patient_id: str) -> None:
     """
@@ -333,13 +397,19 @@ def validate_session_ownership(session_state, patient_id: str, moderator=None) -
     """
     Validate that a session belongs to the specified patient.
     
+    SECURITY: This function now requires patient_id to be present in the session.
+    Sessions without patient_id will be denied access to prevent security vulnerabilities.
+    
     Args:
         session_state: SessionState object
         patient_id: Patient UUID to validate against
         moderator: Optional AssessmentModerator instance for database lookup
         
     Returns:
-        True if session belongs to patient, False otherwise
+        True if session belongs to patient, False otherwise (including if patient_id is missing)
+        
+    Raises:
+        None: Returns False instead of raising exceptions for security validation
     """
     if not session_state:
         return False
@@ -387,10 +457,14 @@ def validate_session_ownership(session_state, patient_id: str, moderator=None) -
             logger.warning(f"Session {session_id}: Patient ID mismatch - session has {session_patient_id}, request has {patient_id_str}")
         return is_match
     
-    # If no patient_id found, allow access (for backward compatibility)
-    # But log a warning
-    logger.warning(f"Session {session_id} has no patient_id - allowing access for backward compatibility")
-    return True
+    # SECURITY FIX: If no patient_id found, deny access
+    # This prevents unauthorized access to sessions without proper ownership validation
+    logger.error(
+        f"SECURITY: Session {session_id} has no patient_id - access denied. "
+        f"Request patient_id: {patient_id_str}. "
+        f"This session may need to be migrated to include patient_id."
+    )
+    return False
 
 def handle_assessment_unavailable() -> Dict[str, Any]:
     """
@@ -455,7 +529,8 @@ def get_conversation_history_records(moderator: Any, session_id: str, limit: Opt
     try:
         return database.get_conversation_history(session_id, limit=limit) or []
     except Exception as exc:
-        logger.debug(f"Failed to get conversation history for session {session_id}: {exc}")
+        logger.error(f"CRITICAL: Failed to retrieve conversation history for session {session_id}: {exc}", exc_info=True)
+        # Return empty list but log the error properly
         return []
 
 def build_agent_status(progress_snapshot: Dict[str, Any], module_results: Dict[str, Any]) -> Dict[str, bool]:
@@ -501,87 +576,10 @@ def generate_session_id() -> str:
     """
     return str(uuid.uuid4())
 
+# DEPRECATED: Use get_patient_id() instead
 def get_patient_uuid(current_user_data) -> Optional[str]:
-    """
-    Extract patient UUID from current user data.
-    
-    Args:
-        current_user_data: Current user data dict from get_current_user_from_token
-                           Format: {"user": user_obj, "auth_info": auth_info, "user_type": str}
-        
-    Returns:
-        Patient UUID string or None if not found
-    """
-    try:
-        import uuid
-        
-        # Handle dict format from get_current_user_from_token
-        if isinstance(current_user_data, dict):
-            # Get user object from dict
-            user = current_user_data.get("user")
-            if user and hasattr(user, 'id'):
-                try:
-                    # Validate if it's a valid UUID
-                    uuid.UUID(str(user.id))
-                    return str(user.id)
-                except ValueError:
-                    pass
-            
-            # Fallback: try user_id from dict
-            user_id = current_user_data.get("user_id")
-            if user_id:
-                try:
-                    uuid.UUID(str(user_id))
-                    return str(user_id)
-                except ValueError:
-                    pass
-        
-        # Handle object format (CurrentUserResponse or user object)
-        if hasattr(current_user_data, 'id'):
-            try:
-                uuid.UUID(str(current_user_data.id))
-                return str(current_user_data.id)
-            except ValueError:
-                pass
-        
-        if hasattr(current_user_data, 'user_id'):
-            try:
-                uuid.UUID(str(current_user_data.user_id))
-                return str(current_user_data.user_id)
-            except ValueError:
-                pass
-        
-        # Fallback: try to get patient by email
-        email = None
-        if isinstance(current_user_data, dict):
-            user = current_user_data.get("user")
-            if user and hasattr(user, 'email'):
-                email = user.email
-            else:
-                email = current_user_data.get("email")
-        elif hasattr(current_user_data, 'email'):
-            email = current_user_data.email
-        
-        if email:
-            from app.db.session import SessionLocal
-            from app.models.patient import Patient
-            
-            db = SessionLocal()
-            try:
-                patient = db.query(Patient).filter(Patient.email == email).first()
-                if patient:
-                    return str(patient.id)
-            except Exception as e:
-                logger.error(f"Failed to lookup patient by email: {e}")
-            finally:
-                db.close()
-        
-        logger.warning(f"Could not extract valid patient UUID from user data: {current_user_data}")
-        return None
-        
-    except Exception as e:
-        logger.error(f"Error extracting patient UUID: {e}", exc_info=True)
-        return None
+    """DEPRECATED: Use get_patient_id() instead"""
+    return get_patient_id(current_user_data)
 
 # ============================================================================
 # REQUEST/RESPONSE MODELS
@@ -791,7 +789,7 @@ async def assessment_chat(
     """
     # Log the received request for debugging
     logger.info(f"Chat request received - message: {request.message}, session_id: {request.session_id}")
-    
+
     # Validate that a message was provided
     if not request.message:
         logger.error(f"Empty message in chat request. Fields: message={request.message}, user_response={request.user_response}")
@@ -799,20 +797,10 @@ async def assessment_chat(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Either 'message' or 'user_response' field is required"
         )
-    
-    if not is_assessment_available():
-        error_info = handle_assessment_unavailable()
-        return AssessmentChatResponse(
-            response=error_info["message"],
-            session_id=request.session_id or "degraded_mode",
-            current_module="none",
-            is_complete=False,
-            progress_percentage=None,
-            metadata=error_info
-        )
-    
+
     try:
-        moderator = get_moderator()
+        # Get assessment system (main or fallback)
+        assessment_system, is_fallback = get_assessment_system()
         user_id = validate_patient_access(current_user_data)
         patient_id = user_id
 
@@ -822,57 +810,87 @@ async def assessment_chat(
         # Use provided session_id or create new one
         session_id = request.session_id or generate_session_id()
         
-        # If session_id provided, validate ownership
-        if request.session_id and patient_id:
+        # If session_id provided, validate ownership (only for main system)
+        if request.session_id and patient_id and not is_fallback:
             try:
-                validate_session_access(moderator, session_id, patient_id, require_session=False)
+                validate_session_access(assessment_system, session_id, patient_id, require_session=False)
             except HTTPException:
                 # If validation fails, ensure session has patient_id if it exists
-                session_state = moderator.get_session_state(session_id)
+                session_state = assessment_system.get_session_state(session_id)
                 if session_state and patient_id:
                     if not session_state.metadata or not isinstance(session_state.metadata, dict):
                         session_state.metadata = {}
                     session_state.metadata["patient_id"] = str(patient_id)
                     # Try to create in database if it doesn't exist
-                    if hasattr(moderator, 'db') and moderator.db:
+                    if hasattr(assessment_system, 'db') and assessment_system.db:
                         try:
-                            db_session = moderator.db.get_session(session_id)
+                            db_session = assessment_system.db.get_session(session_id)
                             if not db_session:
-                                moderator.db.create_session(session_state, patient_id)
+                                assessment_system.db.create_session(session_state, patient_id)
                         except Exception as e:
                             logger.debug(f"Could not create session in database: {e}")
-        
-        # Process message through moderator
+
+        # Process message through assessment system with fallback on failure
         start_time = time.time()
-        response_text = moderator.process_message(
-            user_id=user_id,
-            session_id=session_id,
-            message=request.message
-        )
+        try:
+            response_text = assessment_system.process_message(
+                user_id=user_id,
+                session_id=session_id,
+                message=request.message
+            )
+        except Exception as process_error:
+            logger.warning(f"Main assessment system failed during message processing: {process_error}")
+            # Check if this is an LLM-related error that should trigger fallback
+            if any(keyword in str(process_error).lower() for keyword in ['llm', 'api', 'model', 'timeout', 'connection']):
+                logger.info("LLM/API error detected, falling back to fallback system")
+                if FALLBACK_AVAILABLE:
+                    fallback_system = get_fallback_system()
+                    # Try to get or create session state for fallback
+                    try:
+                        fallback_session = fallback_system.get_session_state(session_id)
+                        if not fallback_session:
+                            # Start new fallback session if it doesn't exist
+                            fallback_greeting = fallback_system.start_assessment(user_id, session_id)
+                            # Skip the greeting and process the actual message
+                            response_text = fallback_system.process_message(user_id, session_id, request.message)
+                        else:
+                            response_text = fallback_system.process_message(user_id, session_id, request.message)
+                    except Exception as fallback_error:
+                        logger.error(f"Fallback system also failed: {fallback_error}")
+                        response_text = "I'm sorry, both the main assessment system and backup system are currently unavailable. Please try again later or contact support."
+                else:
+                    response_text = "I'm sorry, the assessment system is currently unavailable due to technical issues. Please try again later."
+            else:
+                # Re-raise non-LLM errors
+                raise process_error
+
         processing_time = int((time.time() - start_time) * 1000)
-        
-        # Ensure session has patient_id after processing (in case it was just created)
-        if patient_id:
-            session_state = moderator.get_session_state(session_id)
+
+        # Determine if we're using fallback system (for conversation storage)
+        current_is_fallback = hasattr(assessment_system, 'get_progress')
+
+        # Ensure session has patient_id after processing (main system only)
+        if patient_id and not current_is_fallback:
+            session_state = assessment_system.get_session_state(session_id)
             if session_state:
                 if not session_state.metadata or not isinstance(session_state.metadata, dict):
                     session_state.metadata = {}
                 if not session_state.metadata.get("patient_id"):
                     session_state.metadata["patient_id"] = str(patient_id)
                     # Try to create in database if it doesn't exist
-                    if hasattr(moderator, 'db') and moderator.db:
+                    if hasattr(assessment_system, 'db') and assessment_system.db:
                         try:
-                            db_session = moderator.db.get_session(session_id)
+                            db_session = assessment_system.db.get_session(session_id)
                             if not db_session:
-                                moderator.db.create_session(session_state, patient_id)
+                                assessment_system.db.create_session(session_state, patient_id)
                         except Exception as e:
                             logger.debug(f"Could not create session in database: {e}")
-        
-        # Store conversation messages
-        if patient_id and hasattr(moderator, 'db') and moderator.db:
+
+        # Store conversation messages (main system only, or fallback if dynamically switched)
+        if patient_id and not current_is_fallback and hasattr(assessment_system, 'db') and assessment_system.db:
             try:
-                current_module = moderator.get_current_module(session_id) or "unknown"
-                moderator.db.store_conversation_message(
+                current_module = assessment_system.get_current_module(session_id) or "unknown"
+                assessment_system.db.store_conversation_message(
                     session_id=session_id,
                     patient_id=patient_id,
                     role='user',
@@ -881,8 +899,8 @@ async def assessment_chat(
                     message_type='text',
                     metadata={'user_id': user_id}
                 )
-                
-                moderator.db.store_conversation_message(
+
+                assessment_system.db.store_conversation_message(
                     session_id=session_id,
                     patient_id=patient_id,
                     role='assistant',
@@ -893,47 +911,85 @@ async def assessment_chat(
                 )
             except Exception as e:
                 logger.error(f"Failed to store conversation messages: {e}")
+
+        # Get session state and progress - handle dynamic fallback
+
+        if current_is_fallback:
+            # Fallback system
+            session_state = assessment_system.get_session_state(session_id)
+            progress = assessment_system.get_progress(session_id)
+            progress_snapshot = progress or {}
+            progress_percentage = progress_snapshot.get("percentage", 0) if progress_snapshot else None
+            symptom_summary = None  # Fallback system doesn't provide symptom summaries
+        else:
+            # Main system
+            session_state = assessment_system.get_session_state(session_id)
+            progress = assessment_system.get_session_progress(session_id)
+            progress_snapshot = progress or {}
+            progress_percentage = progress_snapshot.get("overall_percentage", 0) if progress_snapshot else None
+            if progress_percentage is None and progress:
+                progress_percentage = progress_snapshot.get("overall", 0)
+            symptom_summary = get_symptom_summary(assessment_system, session_id)
         
-        # Get session state and progress
-        session_state = moderator.get_session_state(session_id)
-        progress = moderator.get_session_progress(session_id)
-        
-        # Build response
-        progress_snapshot = progress or {}
-        progress_percentage = progress_snapshot.get("overall_percentage", 0) if progress_snapshot else None
-        if progress_percentage is None and progress:
-            progress_percentage = progress_snapshot.get("overall", 0)
-        symptom_summary = get_symptom_summary(moderator, session_id)
-        
-        return AssessmentChatResponse(
-            response=response_text,
-            session_id=session_id,
-            current_module=session_state.current_module if session_state else None,
-            is_complete=progress_snapshot.get("is_complete", False) if progress_snapshot else False,
-            progress_percentage=progress_percentage,
-            module_sequence=progress_snapshot.get("module_sequence"),
-            module_status=progress_snapshot.get("module_status"),
-            next_module=progress_snapshot.get("next_module"),
-            module_timeline=progress_snapshot.get("module_timeline"),
-            flow_info=progress_snapshot.get("flow_info"),
-            background_services=progress_snapshot.get("background_services"),
-            progress_snapshot=progress_snapshot,
-            symptom_summary=symptom_summary,
-            metadata={
-                "processing_time_ms": processing_time,
-                "module_history": session_state.module_history if session_state else [],
-                "progress_snapshot": progress_snapshot,
-                "symptom_summary": symptom_summary,
-            }
-        )
-        
+        # Build response with system-specific handling
+        if is_fallback:
+            # Fallback system response
+            return AssessmentChatResponse(
+                response=response_text,
+                session_id=session_id,
+                current_module="fallback_assessment",
+                is_complete=progress_snapshot.get("is_complete", False) if progress_snapshot else False,
+                progress_percentage=progress_percentage,
+                module_sequence=["fallback_assessment"],
+                module_status=[{"module": "fallback_assessment", "status": "completed" if progress_snapshot.get("is_complete", False) else "in_progress"}],
+                next_module=None,
+                module_timeline={"fallback_assessment": {"status": "completed" if progress_snapshot.get("is_complete", False) else "in_progress"}},
+                flow_info={"fallback_mode": True, "reason": "Main assessment system unavailable"},
+                background_services={},
+                progress_snapshot=progress_snapshot,
+                symptom_summary=None,
+                metadata={
+                    "processing_time_ms": processing_time,
+                    "fallback_mode": True,
+                    "progress_snapshot": progress_snapshot,
+                }
+            )
+        else:
+            # Main system response
+            return AssessmentChatResponse(
+                response=response_text,
+                session_id=session_id,
+                current_module=session_state.current_module if session_state else None,
+                is_complete=progress_snapshot.get("is_complete", False) if progress_snapshot else False,
+                progress_percentage=progress_percentage,
+                module_sequence=progress_snapshot.get("module_sequence"),
+                module_status=progress_snapshot.get("module_status"),
+                next_module=progress_snapshot.get("next_module"),
+                module_timeline=progress_snapshot.get("module_timeline"),
+                flow_info=progress_snapshot.get("flow_info"),
+                background_services=progress_snapshot.get("background_services"),
+                progress_snapshot=progress_snapshot,
+                symptom_summary=symptom_summary,
+                metadata={
+                    "processing_time_ms": processing_time,
+                    "module_history": session_state.module_history if session_state else [],
+                    "progress_snapshot": progress_snapshot,
+                    "symptom_summary": symptom_summary,
+                }
+            )
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Assessment chat error: {e}", exc_info=True)
+        logger.error(f"Exception type: {type(e).__name__}")
+        logger.error(f"Exception str: {str(e)}")
+        logger.error(f"Exception repr: {repr(e)}")
+        error_detail = f"Assessment chat failed: {str(e)}"
+        logger.error(f"Final error detail: {error_detail}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Assessment chat failed: {str(e)}"
+            detail=error_detail
         )
 
 @router.post("/start", response_model=AssessmentStartResponse)
@@ -957,7 +1013,8 @@ async def start_assessment(
         )
     
     try:
-        moderator = get_moderator()
+        # Get assessment system (main or fallback)
+        assessment_system, is_fallback = get_assessment_system()
         user_id = validate_patient_access(current_user_data)
         patient_id = user_id
 
@@ -968,74 +1025,106 @@ async def start_assessment(
         session_id = request.session_id or generate_session_id()
         
         # Start assessment
-        greeting = moderator.start_assessment(
+        greeting = assessment_system.start_assessment(
             user_id=user_id,
             session_id=session_id
         )
-        
-        # Ensure session has patient_id in metadata and is stored in database
-        if patient_id:
-            session_state = moderator.get_session_state(session_id)
+
+        # Database operations only for main system
+        if patient_id and not is_fallback:
+            session_state = assessment_system.get_session_state(session_id)
             if session_state:
                 # Update session metadata with actual patient_id (UUID)
                 if not session_state.metadata or not isinstance(session_state.metadata, dict):
                     session_state.metadata = {}
                 session_state.metadata["patient_id"] = str(patient_id)
-                
+
                 # Create session in database if it doesn't exist
-                if hasattr(moderator, 'db') and moderator.db:
+                if hasattr(assessment_system, 'db') and assessment_system.db:
                     try:
                         # Check if session exists in database
-                        db_session = moderator.db.get_session(session_id)
+                        db_session = assessment_system.db.get_session(session_id)
                         if not db_session:
                             # Create session in database
-                            moderator.db.create_session(session_state, patient_id)
+                            assessment_system.db.create_session(session_state, patient_id)
                     except Exception as e:
                         logger.warning(f"Could not create session in database: {e}")
-        
-        # Store initial greeting
-        if patient_id and hasattr(moderator, 'db') and moderator.db:
+
+        # Store initial greeting (main system only)
+        if patient_id and not is_fallback and hasattr(assessment_system, 'db') and assessment_system.db:
             try:
-                moderator.db.store_conversation_message(
+                assessment_system.db.store_conversation_message(
                     session_id=session_id,
                     patient_id=patient_id,
                     role='assistant',
                     message=greeting,
-                    module_name=moderator.get_current_module(session_id) or "unknown",
+                    module_name=assessment_system.get_current_module(session_id) or "unknown",
                     message_type='greeting',
                     metadata={'is_initial_greeting': True}
                 )
             except Exception as e:
                 logger.error(f"Failed to store initial greeting: {e}")
-        
-        # Get available modules
-        available_modules = list(moderator.modules.keys()) if hasattr(moderator, 'modules') else []
-        session_state = moderator.get_session_state(session_id)
-        progress_snapshot = get_progress_snapshot(moderator, session_id)
-        symptom_summary = get_symptom_summary(moderator, session_id)
-        started_at_iso = session_state.started_at.isoformat() if session_state and session_state.started_at else datetime.now().isoformat()
-        metadata_payload = {
-            "user_id": user_id,
-            "started_at": started_at_iso,
-            "module_count": len(available_modules),
-            "progress_snapshot": progress_snapshot,
-            "module_history": progress_snapshot.get("module_history", []),
-            "background_services": progress_snapshot.get("background_services"),
-        }
-        
-        return AssessmentStartResponse(
-            session_id=session_id,
-            greeting=greeting,
-            available_modules=available_modules,
-            metadata=metadata_payload,
-            current_module=session_state.current_module if session_state else None,
-            module_sequence=progress_snapshot.get("module_sequence"),
-            module_status=progress_snapshot.get("module_status"),
-            module_timeline=progress_snapshot.get("module_timeline"),
-            flow_info=progress_snapshot.get("flow_info"),
-            background_services=progress_snapshot.get("background_services"),
-            progress_snapshot=progress_snapshot,
-            total_estimated_duration=progress_snapshot.get("total_estimated_duration"),
+
+        # Get available modules and session info
+        if is_fallback:
+            available_modules = ["fallback_assessment"]
+            session_state = assessment_system.get_session_state(session_id)
+            progress_snapshot = assessment_system.get_progress(session_id)
+            symptom_summary = None
+        else:
+            available_modules = list(assessment_system.modules.keys()) if hasattr(assessment_system, 'modules') else []
+            session_state = assessment_system.get_session_state(session_id)
+            progress_snapshot = get_progress_snapshot(assessment_system, session_id)
+            symptom_summary = get_symptom_summary(assessment_system, session_id)
+        # Build response with system-specific handling
+        if is_fallback:
+            started_at_iso = session_state.created_at.isoformat() if session_state else datetime.now().isoformat()
+            metadata_payload = {
+                "user_id": user_id,
+                "started_at": started_at_iso,
+                "module_count": len(available_modules),
+                "fallback_mode": True,
+                "progress_snapshot": progress_snapshot,
+            }
+
+            return AssessmentStartResponse(
+                session_id=session_id,
+                greeting=greeting,
+                available_modules=available_modules,
+                metadata=metadata_payload,
+                current_module="fallback_assessment",
+                module_sequence=["fallback_assessment"],
+                module_status={"fallback_assessment": "in_progress"},
+                module_timeline=[{"module": "fallback_assessment", "status": "in_progress"}],
+                flow_info={"fallback_mode": True, "reason": "Main assessment system unavailable"},
+                background_services={},
+                progress_snapshot=progress_snapshot,
+                total_estimated_duration=300,  # 5 minutes for fallback assessment
+            )
+        else:
+            started_at_iso = session_state.started_at.isoformat() if session_state and session_state.started_at else datetime.now().isoformat()
+            metadata_payload = {
+                "user_id": user_id,
+                "started_at": started_at_iso,
+                "module_count": len(available_modules),
+                "progress_snapshot": progress_snapshot,
+                "module_history": progress_snapshot.get("module_history", []),
+                "background_services": progress_snapshot.get("background_services"),
+            }
+
+            return AssessmentStartResponse(
+                session_id=session_id,
+                greeting=greeting,
+                available_modules=available_modules,
+                metadata=metadata_payload,
+                current_module=session_state.current_module if session_state else None,
+                module_sequence=progress_snapshot.get("module_sequence"),
+                module_status=progress_snapshot.get("module_status"),
+                module_timeline=progress_snapshot.get("module_timeline"),
+                flow_info=progress_snapshot.get("flow_info"),
+                background_services=progress_snapshot.get("background_services"),
+                progress_snapshot=progress_snapshot,
+                total_estimated_duration=progress_snapshot.get("total_estimated_duration"),
             symptom_summary=symptom_summary
         )
         
@@ -1877,7 +1966,7 @@ async def deploy_module(
             )
         
         # Extract user_id and user_type from current_user_data
-        user_id = extract_user_id(current_user_data)
+        user_id = get_patient_id(current_user_data)
         user_type = extract_user_type(current_user_data)
         
         if user_type and user_type != "patient":

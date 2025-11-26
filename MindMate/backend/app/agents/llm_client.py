@@ -11,14 +11,40 @@ from functools import wraps
 import threading
 from collections import deque
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-# Configure logging
+# Configure basic logging first
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    # Load environment variables
+    load_dotenv()
+except ImportError:
+    # dotenv not available, try to load .env manually
+    try:
+        env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+        if os.path.exists(env_path):
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        # Remove quotes if present
+                        value = value.strip('\"\'')
+                        os.environ[key] = value
+            logger.info("Loaded environment variables from .env file manually")
+    except Exception as e:
+        logger.warning(f"Failed to load .env file manually: {e}")
+        pass
+
+# Try to import config settings as fallback
+try:
+    from app.core.config import settings as app_settings
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+    app_settings = None
 
 @dataclass
 class Message:
@@ -156,28 +182,70 @@ class LLMClient:
     Enhanced LLM client with circuit breaker, rate limiting, caching, and robust error handling.
     """
     
-    def __init__(self, model: str = None, enable_cache: bool = True):
+    def __init__(self, model: str = None, enable_cache: bool = True, verify_connection: bool = True):
         """
         Initialize the enhanced LLM client.
-        
+
         Args:
-            model: The model to use (if None, will use GROQ_MODEL from .env or default)
+            model: The model to use (if None, will use OPENROUTER_MODEL or GROQ_MODEL from .env)
             enable_cache: Whether to enable response caching
+            verify_connection: Whether to verify API connection on initialization (default: True)
+                              If False, connection will be verified on first API call
         """
-        self.api_key = os.getenv("GROQ_API_KEY")
+        # Prioritize Groq over OpenRouter (Groq has working API key)
+        self.api_key = os.getenv("GROQ_API_KEY", "").strip()
+        self.service = "groq"
+
         if not self.api_key:
-            raise ValueError("GROQ_API_KEY environment variable is required")
+            # Fallback to OpenRouter if Groq not available
+            self.api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+            self.service = "openrouter"
+
+        if not self.api_key and CONFIG_AVAILABLE and app_settings:
+            if hasattr(app_settings, 'GROQ_API_KEY') and app_settings.GROQ_API_KEY:
+                self.api_key = app_settings.GROQ_API_KEY.strip()
+                self.service = "groq"
+                logger.info("Using GROQ_API_KEY from config.py settings")
+            elif hasattr(app_settings, 'OPENROUTER_API_KEY') and app_settings.OPENROUTER_API_KEY:
+                self.api_key = app_settings.OPENROUTER_API_KEY.strip()
+                self.service = "openrouter"
+                logger.info("Using OPENROUTER_API_KEY from config.py settings")
+
+        # Validate API key format
+        if self.api_key:
+            if self.service == "groq" and not self.api_key.startswith("gsk_"):
+                logger.warning(f"Groq API key format may be invalid (should start with 'gsk_'). First 10 chars: {self.api_key[:10]}...")
+            elif self.service == "openrouter" and not self.api_key.startswith("sk-or-v1"):
+                logger.warning(f"OpenRouter API key format may be invalid (should start with 'sk-or-v1'). First 10 chars: {self.api_key[:10]}...")
+            if len(self.api_key) < 20:
+                logger.warning(f"API key seems too short (length: {len(self.api_key)}). Expected ~50+ characters.")
+        else:
+            logger.warning("No LLM API key is set. LLM features will not work.")
+            self.api_key = ""  # Set empty string to allow initialization
         
-        # Get model from environment variable or use provided model or default
+        # Get model from environment variable, config, or use provided model or default
         if model is None:
-            self.model = os.getenv("GROQ_MODEL")
+            if self.service == "openrouter":
+                self.model = os.getenv("OPENROUTER_MODEL", "").strip()
+                if not self.model and CONFIG_AVAILABLE and app_settings and hasattr(app_settings, 'OPENROUTER_MODEL'):
+                    self.model = app_settings.OPENROUTER_MODEL.strip()
+                if not self.model:
+                    self.model = "google/gemini-2.5-pro-exp-03-25:free"  # Default OpenRouter model
+            else:  # groq
+                self.model = os.getenv("GROQ_MODEL", "").strip()
+                if not self.model and CONFIG_AVAILABLE and app_settings and hasattr(app_settings, 'GROQ_MODEL'):
+                    self.model = app_settings.GROQ_MODEL.strip()
+                if not self.model:
+                    self.model = "llama3-8b-8192"  # Default Groq model
         else:
             self.model = model
-        self.base_url = "https://api.groq.com/openai/v1"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+
+        # Set base URL based on service
+        if self.service == "openrouter":
+            self.base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        else:  # groq
+            self.base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+        self._update_headers()
         
         # Initialize components
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=120)
@@ -187,8 +255,24 @@ class LLMClient:
         # Model configuration
         self.max_context_length = self._get_model_context_limit()
         
-        # Verify connection
-        self._verify_connection()
+        # Connection status
+        self._connection_verified = False
+        self._connection_valid = False
+        
+        # Verify connection if requested and API key is available
+        if verify_connection and self.api_key:
+            self._verify_connection()
+        elif not self.api_key:
+            logger.warning("LLMClient initialized without API key. Connection verification skipped.")
+            self._connection_verified = True  # Mark as verified to prevent repeated warnings
+            self._connection_valid = False
+    
+    def _update_headers(self):
+        """Update headers with current API key"""
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
     
     def _get_model_context_limit(self) -> int:
         """Get context limit for the model"""
@@ -213,38 +297,69 @@ class LLMClient:
         return max(1, len(text) // 4)
     
     def _verify_connection(self) -> bool:
-        """Verify API connection with retry logic"""
+        """Verify API connection with retry logic. Returns False on failure but doesn't raise exception."""
+        if not self.api_key:
+            logger.warning("Cannot verify connection: GROQ_API_KEY is not set")
+            self._connection_verified = True
+            self._connection_valid = False
+            return False
+        
+        # Update headers in case API key changed
+        self._update_headers()
+        
+        # Log API key status (masked for security)
+        masked_key = f"{self.api_key[:10]}..." if len(self.api_key) > 10 else "***"
+        logger.debug(f"Verifying connection with API key: {masked_key}")
+        
         max_retries = 3
         
         for attempt in range(max_retries):
             try:
-                response = requests.get(f"{self.base_url}/models", headers=self.headers, timeout=10)
-                response.raise_for_status()
-                
-                models = response.json()
-                available_models = [model['id'] for model in models.get('data', [])]
-                
-                if self.model not in available_models:
-                    logger.warning(f"Model {self.model} not found in available models.")
-                    logger.info(f"Available models: {available_models}")
-                    
-                    # Try to find a suitable alternative
-                    qwen_alternatives = [m for m in available_models if 'qwen' in m.lower()]
-                    llama_alternatives = [m for m in available_models if 'llama' in m.lower()]
-                    
-                    if qwen_alternatives:
-                        self.model = qwen_alternatives[0]
-                        logger.info(f"Switched to Qwen alternative: {self.model}")
-                    elif llama_alternatives:
-                        self.model = llama_alternatives[0]
-                        logger.info(f"Switched to Llama alternative: {self.model}")
-                    elif available_models:
-                        self.model = available_models[0]
-                        logger.info(f"Switched to first available model: {self.model}")
-                    else:
-                        raise ValueError("No models available from API")
-                
-                logger.info(f"Connected to Groq API successfully. Using model: {self.model}")
+                # Use different endpoints for different services
+                if self.service == "openrouter":
+                    # OpenRouter doesn't have a models endpoint, so we'll test with a simple chat completion
+                    test_payload = {
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": "Hello"}],
+                        "max_tokens": 10
+                    }
+                    response = requests.post(f"{self.base_url}/chat/completions", headers=self.headers, json=test_payload, timeout=10)
+                    response.raise_for_status()
+                    logger.info(f"Connected to OpenRouter API successfully. Using model: {self.model}")
+                else:  # groq
+                    response = requests.get(f"{self.base_url}/models", headers=self.headers, timeout=10)
+                    response.raise_for_status()
+
+                    models = response.json()
+                    available_models = [model['id'] for model in models.get('data', [])]
+
+                    if self.model not in available_models:
+                        logger.warning(f"Model {self.model} not found in available models.")
+                        logger.info(f"Available models: {available_models}")
+
+                        # Try to find a suitable alternative
+                        qwen_alternatives = [m for m in available_models if 'qwen' in m.lower()]
+                        llama_alternatives = [m for m in available_models if 'llama' in m.lower()]
+
+                        if qwen_alternatives:
+                            self.model = qwen_alternatives[0]
+                            logger.info(f"Switched to Qwen alternative: {self.model}")
+                        elif llama_alternatives:
+                            self.model = llama_alternatives[0]
+                            logger.info(f"Switched to Llama alternative: {self.model}")
+                        elif available_models:
+                            self.model = available_models[0]
+                            logger.info(f"Switched to first available model: {self.model}")
+                        else:
+                            logger.error("No models available from API")
+                            self._connection_verified = True
+                            self._connection_valid = False
+                            return False
+
+                    logger.info(f"Connected to Groq API successfully. Using model: {self.model}")
+
+                self._connection_verified = True
+                self._connection_valid = True
                 return True
                 
             except Exception as e:
@@ -253,8 +368,19 @@ class LLMClient:
                     logger.warning(f"Connection attempt {attempt + 1} failed, retrying in {wait_time}s: {e}")
                     time.sleep(wait_time)
                 else:
-                    logger.error(f"Failed to connect to Groq API after {max_retries} attempts: {e}")
-                    raise
+                    error_msg = str(e)
+                    if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API Key" in error_msg:
+                        logger.error(f"❌ API key is INVALID or UNAUTHORIZED. Please check your GROQ_API_KEY in .env file.")
+                        logger.error(f"   The API key should start with 'gsk_' and be ~50+ characters long.")
+                        logger.error(f"   Get a valid API key from: https://console.groq.com/keys")
+                    else:
+                        logger.error(f"Failed to connect to Groq API after {max_retries} attempts: {e}")
+                    logger.warning("LLMClient will continue but API calls may fail. Please check GROQ_API_KEY configuration.")
+                    self._connection_verified = True
+                    self._connection_valid = False
+                    return False
+        
+        return False
     
     def _truncate_payload(self, messages: List[Dict], max_tokens: int) -> List[Dict]:
         """Intelligently truncate payload to fit within limits"""
@@ -310,6 +436,25 @@ class LLMClient:
         **kwargs
     ) -> str:
         """Make protected API request with all safety measures"""
+        
+        # Verify connection if not already verified
+        if not self._connection_verified:
+            self._verify_connection()
+        
+        # Update headers in case API key changed
+        self._update_headers()
+        
+        # Check if connection is valid
+        if not self._connection_valid or not self.api_key:
+            service_name = "OpenRouter" if self.service == "openrouter" else "Groq"
+            error_msg = f"LLM API connection is not available. Please check {service_name}_API_KEY configuration."
+            if not self.api_key:
+                error_msg += " API key is not set."
+            elif not self._connection_valid:
+                service_url = "https://openrouter.ai/keys" if self.service == "openrouter" else "https://console.groq.com/keys"
+                error_msg += f" API key appears to be invalid. Please verify it at {service_url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         # Truncate payload if necessary
         messages = self._truncate_payload(messages, max_tokens)

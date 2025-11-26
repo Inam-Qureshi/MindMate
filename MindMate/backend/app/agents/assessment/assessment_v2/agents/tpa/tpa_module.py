@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -554,13 +555,13 @@ Include lifestyle recommendations that support treatment."""
             try:
                 # Validate response content exists and is not empty
                 if not hasattr(response, 'content') or response.content is None:
-                    logger.warning("LLM response has no content attribute, using rule-based plan")
+                    logger.debug("LLM response has no content attribute, using rule-based plan")
                     return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
                 
                 # Clean and validate content
                 content = str(response.content).strip() if response.content else ""
                 if not content:
-                    logger.warning("LLM returned empty response content, using rule-based plan")
+                    logger.debug("LLM returned empty response content, using rule-based plan")
                     return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
                 
                 # Clean JSON content (remove code block markers if present)
@@ -574,38 +575,22 @@ Include lifestyle recommendations that support treatment."""
                 
                 # Validate content is not empty after cleaning
                 if not content:
-                    logger.warning("LLM response content is empty after cleaning, using rule-based plan")
+                    logger.debug("LLM response content is empty after cleaning, using rule-based plan")
                     return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
                 
-                # Find JSON object if not at start
-                if not content.startswith("{"):
-                    start_idx = content.find("{")
-                    if start_idx != -1:
-                        content = content[start_idx:]
-                    else:
-                        logger.warning("No JSON object found in LLM response, using rule-based plan")
-                        return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
+                # Improved JSON extraction: find the largest valid JSON object
+                json_content = self._extract_json_from_text(content)
                 
-                # Find end of JSON object
-                if not content.endswith("}"):
-                    end_idx = content.rfind("}")
-                    if end_idx != -1:
-                        content = content[:end_idx + 1]
-                    else:
-                        logger.warning("Incomplete JSON object in LLM response, using rule-based plan")
-                        return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
-                
-                # Final validation before parsing
-                if not content or len(content) < 2:  # At least "{}"
-                    logger.warning("LLM response content too short to be valid JSON, using rule-based plan")
+                if not json_content:
+                    logger.debug("No valid JSON object found in LLM response, using rule-based plan")
                     return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
                 
                 # Parse JSON
                 try:
-                    plan = json.loads(content)
+                    plan = json.loads(json_content)
                 except json.JSONDecodeError as parse_error:
-                    logger.warning(f"JSON parsing failed: {parse_error}, content length: {len(content)}, using rule-based plan")
-                    logger.debug(f"Content preview: {content[:200]}")
+                    logger.debug(f"JSON parsing failed: {parse_error}, using rule-based plan")
+                    logger.debug(f"Content preview: {json_content[:200]}")
                     return self._generate_rule_based_plan(diagnosis, symptoms, demographics, risk_level)
                 
                 if not isinstance(plan, dict):
@@ -987,6 +972,155 @@ Include lifestyle recommendations that support treatment."""
             error=str(error),
             metadata={"error_type": type(error).__name__, "module": self.module_name}
         )
+    
+    def _extract_json_from_text(self, text: str) -> Optional[str]:
+        """
+        Extract JSON object from text, handling various formats.
+        
+        Tries multiple strategies:
+        1. Direct JSON if text starts with {
+        2. Find first { and last } and extract
+        3. Find all { } pairs and extract the largest valid JSON
+        4. Try to fix common JSON issues (trailing commas, etc.)
+        
+        Args:
+            text: Text that may contain JSON
+            
+        Returns:
+            Extracted JSON string or None if not found
+        """
+        if not text:
+            return None
+        
+        # Strategy 1: If text starts with {, try to find matching }
+        if text.startswith("{"):
+            # Count braces to find the end of the JSON object
+            brace_count = 0
+            in_string = False
+            escape_next = False
+            
+            for i, char in enumerate(text):
+                if escape_next:
+                    escape_next = False
+                    continue
+                
+                if char == '\\':
+                    escape_next = True
+                    continue
+                
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                
+                if not in_string:
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            # Found complete JSON object
+                            json_str = text[:i + 1]
+                            try:
+                                # Validate it's actually JSON
+                                json.loads(json_str)
+                                return json_str
+                            except json.JSONDecodeError:
+                                pass
+            
+            # If we didn't find a complete object, try the whole text up to last }
+            if brace_count > 0:
+                last_brace = text.rfind("}")
+                if last_brace != -1:
+                    json_str = text[:last_brace + 1]
+                    try:
+                        json.loads(json_str)
+                        return json_str
+                    except json.JSONDecodeError:
+                        pass
+        
+        # Strategy 2: Find first { and try to extract JSON from there
+        first_brace = text.find("{")
+        if first_brace != -1:
+            # Try to extract JSON starting from first brace
+            potential_json = text[first_brace:]
+            
+            # Count braces to find the end
+            brace_count = 0
+            in_string = False
+            escape_next = False
+            
+            for i, char in enumerate(potential_json):
+                if escape_next:
+                    escape_next = False
+                    continue
+                
+                if char == '\\':
+                    escape_next = True
+                    continue
+                
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                
+                if not in_string:
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_str = potential_json[:i + 1]
+                            try:
+                                json.loads(json_str)
+                                return json_str
+                            except json.JSONDecodeError:
+                                pass
+            
+            # If we didn't find complete JSON, try up to last }
+            if brace_count > 0:
+                last_brace = potential_json.rfind("}")
+                if last_brace != -1:
+                    json_str = potential_json[:last_brace + 1]
+                    try:
+                        json.loads(json_str)
+                        return json_str
+                    except json.JSONDecodeError:
+                        pass
+        
+        # Strategy 3: Try to fix common JSON issues and parse
+        # Remove common non-JSON prefixes/suffixes
+        cleaned = text.strip()
+        
+        # Remove markdown code blocks if still present
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            if len(lines) > 1:
+                cleaned = "\n".join(lines[1:])
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+            cleaned = cleaned.strip()
+        
+        # Try to find JSON boundaries
+        start_idx = cleaned.find("{")
+        end_idx = cleaned.rfind("}")
+        
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            json_str = cleaned[start_idx:end_idx + 1]
+            try:
+                json.loads(json_str)
+                return json_str
+            except json.JSONDecodeError:
+                # Try to fix common issues
+                # Remove trailing commas before }
+                import re
+                json_str = re.sub(r',\s*}', '}', json_str)
+                json_str = re.sub(r',\s*]', ']', json_str)
+                try:
+                    json.loads(json_str)
+                    return json_str
+                except json.JSONDecodeError:
+                    pass
+        
+        return None
     
     def _ensure_session_exists(self, session_id: str) -> None:
         """Ensure session state exists"""

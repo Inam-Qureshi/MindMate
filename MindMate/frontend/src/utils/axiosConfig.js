@@ -7,7 +7,7 @@ import { ROUTES } from '../config/routes';
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: API_CONFIG.timeout || 30000, // Use config timeout (default 30s, was 10s)
+  timeout: API_CONFIG.timeout || 60000, // Increased to 60s for assessment operations
   headers: {
     'Content-Type': 'application/json',
   },

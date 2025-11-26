@@ -140,7 +140,8 @@ class SCID_SC_ItemsSelector:
 
             # Clean session_metadata to remove non-serializable objects (like SQLAlchemy MetaData)
             session_metadata = {}
-            if session_metadata_raw:
+            # Check if session_metadata_raw is actually a dict before trying to iterate
+            if session_metadata_raw and isinstance(session_metadata_raw, dict):
                 for key, value in session_metadata_raw.items():
                     # Skip SQLAlchemy MetaData objects and other non-serializable types
                     if isinstance(value, (str, int, float, bool, type(None))):
