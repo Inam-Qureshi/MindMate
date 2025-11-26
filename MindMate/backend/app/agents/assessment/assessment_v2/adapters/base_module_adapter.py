@@ -110,7 +110,77 @@ class SCIDModuleAdapter(BaseAssessmentModule):
             category=self.scid_module.category,
             estimated_time_mins=self.scid_module.estimated_time_mins
         )
-    
+
+    # ========================================================================
+    # SESSION MANAGEMENT OVERRIDES
+    # ========================================================================
+
+    def _ensure_session_exists(self, session_id: str) -> None:
+        """
+        Ensure a session exists with proper SCID module state initialization.
+
+        Overrides base implementation to include SCID-specific session fields.
+        """
+        if session_id not in self._sessions:
+            self._sessions[session_id] = {
+                "session_id": session_id,
+                "status": "active",
+                "messages": [],
+                "data": {},
+                # SCID-specific fields
+                "responses": [],
+                "answered_questions": [],
+                "conversation_history": [],
+                "current_question_id": None,
+                "is_complete": False,
+                "start_time": None,
+                "end_time": None
+            }
+
+    # ========================================================================
+    # ERROR HANDLING METHODS
+    # ========================================================================
+
+    def on_error(self, session_id: str, error: Exception, **kwargs) -> ModuleResponse:
+        """
+        Handle errors gracefully and return appropriate response.
+
+        Args:
+            session_id: Session identifier
+            error: The exception that occurred
+            **kwargs: Additional context
+
+        Returns:
+            ModuleResponse with error handling
+        """
+        logger.error(f"Error in SCIDModuleAdapter for session {session_id}: {error}")
+
+        # Try to get current question for context
+        try:
+            self._ensure_session_exists(session_id)
+            session_state = self._sessions[session_id]
+            current_question_id = session_state.get('current_question_id')
+
+            if current_question_id:
+                current_question = self.scid_module.get_question_by_id(current_question_id)
+                question_text = getattr(current_question, 'text', 'current question') if current_question else 'current question'
+            else:
+                question_text = 'assessment question'
+        except Exception:
+            question_text = 'assessment question'
+
+        return ModuleResponse(
+            message=f"I apologize, but there was an issue processing your response to the {question_text}. "
+                   f"Let's continue with the assessment. Could you please rephrase your answer?",
+            is_complete=False,
+            requires_input=True,
+            metadata={
+                'error_occurred': True,
+                'error_type': type(error).__name__,
+                'error_message': str(error)
+            }
+        )
+
     # ========================================================================
     # REQUIRED METHODS (from BaseAssessmentModule)
     # ========================================================================
@@ -354,7 +424,48 @@ class SCIDModuleAdapter(BaseAssessmentModule):
             
         except Exception as e:
             logger.error(f"Error processing message for session {session_id}: {e}", exc_info=True)
-            return self.on_error(session_id, e, **kwargs)
+            # Don't use on_error for processing failures - always continue the module
+            # Just log the error and try to continue with next question
+            try:
+                # Still try to get next question and continue
+                answered_questions = set(session_state.get('answered_questions', []))
+                answered_questions.add(current_question_id)
+                session_state['answered_questions'] = list(answered_questions)
+
+                # Store the response even if processing failed
+                session_state['responses'].append({
+                    'question_id': current_question_id,
+                    'response': message,
+                    'processed': None,
+                    'processing_error': str(e)
+                })
+
+                # Try to get next question
+                unanswered = [q for q in self.scid_module.questions if q.id not in answered_questions]
+                if unanswered:
+                    unanswered.sort(key=lambda q: (q.priority, q.sequence_number))
+                    next_question = unanswered[0]
+                    session_state['current_question_id'] = next_question.id
+
+                    return ModuleResponse(
+                        message=f"Thank you for sharing that information. Let's continue with the next question:\n\n{self._format_question(next_question)}",
+                        is_complete=False,
+                        requires_input=True,
+                        metadata={
+                            'module_id': self.scid_module.id,
+                            'module_name': self.scid_module.name,
+                            'question_id': next_question.id,
+                            'answered_count': len(answered_questions),
+                            'total_questions': len(self.scid_module.questions),
+                            'processing_error': True
+                        }
+                    )
+                else:
+                    return self._complete_module(session_id)
+
+            except Exception as continue_error:
+                logger.error(f"Failed to continue after processing error: {continue_error}")
+                return self.on_error(session_id, e, **kwargs)
     
     def is_complete(self, session_id: str) -> bool:
         """

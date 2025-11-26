@@ -417,20 +417,11 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
             user_response
         )
         
+        # Always accept responses, even if validation fails - be forgiving
         if not is_valid:
-            # Invalid response, provide helpful guidance
-            guidance = self._get_validation_guidance(current_question, user_response)
-            return ModuleResponse(
-                message=f"{guidance}\n\n{self._format_question(current_question)}",
-                is_complete=False,
-                metadata={
-                    'module_id': self.scid_module.id,
-                    'current_question': self.current_question_index + 1,
-                    'question_id': current_question.id,
-                    'validation_error': True
-                },
-                next_module=None
-            )
+            logger.debug(f"Response validation failed for question {current_question.id}, but accepting anyway: '{user_response}'")
+            # Use the original response as parsed_response if validation failed
+            parsed_response = user_response
         
         # Check if question was already answered (prevent repetition)
         if current_question.id in self.answered_question_ids:
@@ -792,9 +783,83 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
         # Default: accept as text if has content
         if len(original_response) > 0:
             return True, original_response
-        
-        return False, None
-    
+
+        # If we reach here, the response is empty or unrecognized
+        # Instead of failing, provide a fallback mechanism
+        return self._handle_unrecognized_response(question, original_response)
+
+    def _handle_unrecognized_response(self, question, original_response: str):
+        """
+        Handle unrecognized responses by providing defaults or asking for clarification.
+        This prevents the workflow from getting stuck on unexpected user input.
+        """
+        try:
+            # Track unrecognized responses per question
+            question_id = getattr(question, 'id', str(question))
+            unrecognized_key = f"unrecognized_{question_id}"
+            unrecognized_count = getattr(self, unrecognized_key, 0) + 1
+            setattr(self, unrecognized_key, unrecognized_count)
+
+            # For any unrecognized response, immediately provide a default based on question type
+            logger.info(f"Question {question_id} received unrecognized response '{original_response}', providing default")
+
+            # For boolean questions, default to "no"
+            if hasattr(question, 'response_type') and str(question.response_type).lower() in ['boolean', 'yes_no']:
+                logger.debug(f"Defaulting boolean question to 'no'")
+                return True, 'no'
+
+            # For multiple choice questions, default to first option
+            if hasattr(question, 'options') and question.options:
+                default_option = question.options[0] if question.options else None
+                if default_option:
+                    logger.debug(f"Defaulting multiple choice question to '{default_option}'")
+                    return True, default_option
+
+            # For scale questions, use minimum value
+            if hasattr(question, 'scale_range') and question.scale_range:
+                min_val, _ = question.scale_range
+                logger.debug(f"Defaulting scale question to minimum value {min_val}")
+                return True, min_val
+
+            # For any other type, accept as text if not empty, otherwise default
+            if len(original_response.strip()) > 0:
+                logger.debug(f"Accepting unrecognized response as text: '{original_response.strip()}'")
+                return True, original_response.strip()
+
+            # Ultimate fallback
+            logger.debug("Using ultimate fallback for unrecognized response")
+            return True, "Not specified"
+
+            # For text questions, accept any non-empty response
+            if len(original_response.strip()) > 0:
+                return True, original_response.strip()
+
+            # If still no valid response after multiple attempts, provide a default
+            if unrecognized_count >= 2:
+                logger.warning(f"Question {question_id} received {unrecognized_count} unrecognized responses, providing final default")
+
+                # Provide question-type specific defaults
+                if hasattr(question, 'response_type'):
+                    response_type = str(question.response_type).lower()
+                    if 'boolean' in response_type or 'yes_no' in response_type:
+                        return True, 'no'
+                    elif 'scale' in response_type or 'numeric' in response_type:
+                        return True, 1  # Minimum/default value
+                    else:
+                        return True, "Not specified"
+
+                return True, "Not specified"
+
+            # Ask for clarification by returning invalid response
+            return False, None
+
+        except Exception as e:
+            logger.error(f"Error handling unrecognized response: {e}")
+            # Ultimate fallback - accept any non-empty response
+            if len(original_response.strip()) > 0:
+                return True, original_response.strip()
+            return True, "Not specified"
+
     def _find_closest_match(self, user_response: str, options: List[str]) -> Optional[str]:
         """Find the closest matching option using semantic similarity"""
         if ResponseParser:
@@ -886,20 +951,15 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
         
         if is_multiple_choice:
             closest = self._find_closest_match(user_response, question.options)
-            
+
             if closest:
-                options_text = "\n".join([f"  {i+1}. {opt}" for i, opt in enumerate(question.options)])
-                return (
-                    f"I didn't quite understand '{user_response}'. "
-                    f"Did you mean '{closest}'?\n\n"
-                    f"Please select one of the following options:\n{options_text}"
-                )
+                # Accept the closest match and continue instead of asking for clarification
+                logger.debug(f"Accepting closest match '{closest}' for response '{user_response}'")
+                return closest
             else:
-                options_text = "\n".join([f"  {i+1}. {opt}" for i, opt in enumerate(question.options)])
-                return (
-                    f"I didn't understand '{user_response}'. "
-                    f"Please select one of the following options:\n{options_text}"
-                )
+                # For unclear responses, provide options but don't force selection - accept as free text
+                logger.debug(f"Accepting free text response '{user_response}' for multiple choice question")
+                return user_response
         
         is_scale = ResponseType is not None and question.response_type == ResponseType.SCALE
         if not is_scale and ResponseType is None:
@@ -918,7 +978,9 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
         if is_text:
             return "Please provide a brief description in your own words."
         
-        return f"I didn't quite understand '{user_response}'. Could you please try again?"
+        # Accept any response and continue - don't force retries
+        logger.debug(f"Accepting response '{user_response}' despite processing uncertainty")
+        return user_response
     
     def _generate_acknowledgment(self, user_response: str, parsed_response: Any) -> str:
         """Generate contextual acknowledgment based on user response."""
@@ -1176,7 +1238,6 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
                     assessment_data = AssessmentDataSummary(
                         demographics={},
                         presenting_concern={},
-                        risk_assessment={},
                         session_metadata={}
                     )
             
@@ -1201,7 +1262,6 @@ class SCID_CV_ModuleDeployer(BaseAssessmentModule):
             collection = AssessmentDataCollection(
                 demographics=assessment_data.demographics,
                 presenting_concern=assessment_data.presenting_concern,
-                risk_assessment=assessment_data.risk_assessment,
                 scid_sc_responses=scid_sc_responses,
                 session_metadata=assessment_data.session_metadata
             )

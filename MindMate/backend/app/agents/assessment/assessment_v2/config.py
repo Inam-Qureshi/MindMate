@@ -50,23 +50,6 @@ MODULE_REGISTRY: Dict[str, ModuleConfig] = {
         }
     ),
 
-    "risk_assessment": ModuleConfig(
-        name="risk_assessment",
-        class_path="app.agents.assessment.assessment_v2.modules.basic_info.risk_assessment.create_risk_assessment_module",
-        enabled=True,
-        priority=3,
-        auto_start=False,
-        description="Comprehensive risk assessment for mental health safety evaluation including suicide risk and self-harm assessment",
-        estimated_duration=480,  # 8 minutes
-        dependencies=["presenting_concern"],
-        metadata={
-            "category": "safety",
-            "required": True,
-            "skippable": False,
-            "module_type": "assessment_v2"
-        }
-    ),
-
     "scid_screening": ModuleConfig(
         name="scid_screening",
         class_path="app.agents.assessment.assessment_v2.modules.screening.scid_screening.SCIDScreeningModule",
@@ -75,7 +58,7 @@ MODULE_REGISTRY: Dict[str, ModuleConfig] = {
         auto_start=False,
         description="Targeted SCID-5-SC screening questions based on assessment data to identify additional mental health concerns",
         estimated_duration=300,  # 5 minutes
-        dependencies=["presenting_concern", "risk_assessment"],
+        dependencies=["presenting_concern"],
         metadata={
             "category": "screening",
             "required": False,
@@ -92,7 +75,7 @@ MODULE_REGISTRY: Dict[str, ModuleConfig] = {
         auto_start=False,
         description="Comprehensive SCID-CV diagnostic module deployment - intelligently selected based on assessment data",
         estimated_duration=1200,  # 20 minutes (variable based on selected module)
-        dependencies=["presenting_concern", "risk_assessment", "scid_screening"],
+        dependencies=["presenting_concern", "scid_screening"],
         metadata={
             "category": "diagnostic",
             "required": False,
@@ -164,11 +147,11 @@ ASSESSMENT_FLOW = {
     "default_sequence": [
         "demographics",           # 1. Demographics (basic info)
         "presenting_concern",     # 2. Main mental health concerns
-        "risk_assessment",        # 3. Safety evaluation
-        "scid_screening",         # 4. Targeted SCID-5-SC screening
-        "scid_cv_diagnostic",     # 5. Comprehensive SCID-CV diagnostic assessment (may include multiple modules)
-        "da_diagnostic_analysis", # 6. Diagnostic analysis with DSM-5 (runs after ALL diagnostic modules)
-        "tpa_treatment_planning", # 7. Treatment plan generation (runs after DA)
+        "scid_screening",         # 3. Targeted SCID-5-SC screening
+        "scid_cv_diagnostic",     # 4. Comprehensive SCID-CV diagnostic assessment
+        "sra_clarification",      # 5. SRA clarification (if needed, max 3 questions)
+        "da_diagnostic_analysis", # 6. Diagnostic analysis with DSM-5 (after SRA clarification)
+        "tpa_treatment_planning", # 7. Treatment plan generation (no questions asked)
     ],
     
     # Background services (not in module flow)
@@ -267,7 +250,10 @@ MODERATOR_CONFIG = {
 
 RESPONSE_TEMPLATES = {
     "welcome": {
-        "en": "Hello! Welcome to your assessment. I'll guide you through a series of questions to better understand your needs. This should take about {estimated_time} minutes. Let's get started!",
+        "en": "Hello! Welcome to MindMate's comprehensive mental health assessment. I'm here to guide you through a personalized evaluation to better understand your needs and provide tailored support. This confidential assessment typically takes about {estimated_time} minutes. Let's begin your journey to better mental wellness together!",
+    },
+    "performance_note": {
+        "en": "💡 Assessment optimized for speed and accuracy with intelligent caching and error recovery.",
     },
     
     "module_transition": {
@@ -524,7 +510,7 @@ def get_module_flow_info() -> Dict[str, Any]:
         "sequence": sequence,
         "is_valid_order": is_valid,
         "total_modules": len(sequence),
-        "required_modules": ["demographics", "presenting_concern", "risk_assessment"],
+        "required_modules": ["demographics", "presenting_concern"],
         "flow_type": "sequential",
         "enforcement": "strict"
     }

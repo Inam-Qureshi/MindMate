@@ -2746,7 +2746,6 @@ async def select_scid_cv_modules(
             assessment_data = AssessmentDataCollection(
                 demographics=data_summary.demographics,
                 presenting_concern=data_summary.presenting_concern,
-                risk_assessment=data_summary.risk_assessment,
                 scid_sc_responses=scid_sc_responses,
                 session_metadata=data_summary.session_metadata
             )
@@ -2757,7 +2756,6 @@ async def select_scid_cv_modules(
             assessment_data = AssessmentDataCollection(
                 demographics=data.get("demographics", {}),
                 presenting_concern=data.get("presenting_concern", {}),
-                risk_assessment=data.get("risk_assessment", {}),
                 scid_sc_responses=data.get("scid_sc_responses", {}),
                 session_metadata=data.get("session_metadata", {})
             )

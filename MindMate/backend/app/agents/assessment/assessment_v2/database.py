@@ -113,6 +113,19 @@ class ModeratorDatabase:
         # In-memory cache for performance (backed by PostgreSQL)
         self._session_cache: Dict[str, SessionState] = {}
         self._cache_ttl = 300  # 5 minutes cache TTL
+        self._max_cache_size = 500  # Prevent unlimited cache growth
+
+    def _cleanup_cache(self):
+        """Clean up cache if it exceeds maximum size"""
+        if len(self._session_cache) > self._max_cache_size:
+            # Remove oldest entries (simple LRU approximation)
+            items_to_remove = len(self._session_cache) - self._max_cache_size + 50  # Remove extra to avoid frequent cleanup
+            sessions_to_remove = list(self._session_cache.keys())[:items_to_remove]
+
+            for session_id in sessions_to_remove:
+                del self._session_cache[session_id]
+
+            logger.debug(f"Cleaned up {len(sessions_to_remove)} sessions from cache")
     
     def _get_db_session(self) -> Session:
         """Get a database session"""
@@ -157,7 +170,7 @@ class ModeratorDatabase:
             ).first()
             
             if not session_model:
-                logger.error(f"Session not found: {session_id}")
+                logger.debug(f"Session not found: {session_id}")
                 return None
             
             # Extract patient_id
@@ -322,6 +335,7 @@ class ModeratorDatabase:
             logger.debug(f"Session {session_state.session_id} already exists in database")
             # Update cache and return success
             self._session_cache[session_state.session_id] = session_state
+            self._cleanup_cache()
             return True
 
         # Create session model atomically
@@ -339,11 +353,29 @@ class ModeratorDatabase:
 
         db_session.add(session_model)
 
-        # Update cache
+        # Update cache and cleanup if needed
         self._session_cache[session_state.session_id] = session_state
+        self._cleanup_cache()
 
         logger.info(f"Created session {session_state.session_id} for patient {patient_id}")
         return True
+
+    def _convert_session_id_to_uuid(self, session_id: str) -> Optional[str]:
+        """Convert string session_id to UUID format if needed"""
+        if not session_id:
+            return None
+
+        # If it's already a valid UUID, return it
+        try:
+            from uuid import UUID
+            UUID(session_id)
+            return session_id
+        except (ValueError, TypeError):
+            # Try to create a UUID from the string (deterministic)
+            import hashlib
+            hash_obj = hashlib.md5(session_id.encode('utf-8'))
+            uuid_str = str(UUID(hash_obj.hexdigest()[:32]))
+            return uuid_str
 
     def get_session(self, session_id: str) -> Optional[SessionState]:
         """
@@ -365,9 +397,12 @@ class ModeratorDatabase:
                 logger.warning("Database not available - cannot get session")
                 return None
 
+            # Convert session_id to UUID format for database query
+            session_uuid = self._convert_session_id_to_uuid(session_id)
+
             # Get session model
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
 
             if not session_model:
@@ -392,7 +427,7 @@ class ModeratorDatabase:
 
             # Load module states
             module_states = db.query(AssessmentModuleStateModel).filter(
-                AssessmentModuleStateModel.session_id == session_id
+                AssessmentModuleStateModel.session_id == session_uuid
             ).all()
 
             for state in module_states:
@@ -521,9 +556,12 @@ class ModeratorDatabase:
                 logger.warning("Database not available - cannot save module state")
                 return False
 
+            # Convert session_id to UUID
+            session_uuid = self._convert_session_id_to_uuid(session_id)
+
             # Get or create module state
             module_state = db.query(AssessmentModuleStateModel).filter(
-                AssessmentModuleStateModel.session_id == session_id,
+                AssessmentModuleStateModel.session_id == session_uuid,
                 AssessmentModuleStateModel.module_name == module_name
             ).first()
 
@@ -532,7 +570,7 @@ class ModeratorDatabase:
                 module_state.updated_at = datetime.now()
             else:
                 module_state = AssessmentModuleStateModel(
-                    session_id=session_id,
+                    session_id=session_uuid,
                     module_name=module_name,
                     state_data=state,
                     updated_at=datetime.now()
@@ -623,8 +661,9 @@ class ModeratorDatabase:
                 return False
 
             # Get session model first
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
 
             if not session_model:
@@ -836,15 +875,16 @@ class ModeratorDatabase:
                 patient_id_uuid = patient_id_value
             
             # Get session model to get the UUID
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
-            
+
             if not session_model:
-                logger.error(f"Session not found: {session_id}")
+                logger.warning(f"Session not found for conversation storage: {session_id}")
                 db.close()
                 return False
-            
+
             # Prepare metadata
             message_metadata = metadata or {}
             if message_type:
@@ -893,8 +933,9 @@ class ModeratorDatabase:
                 return []
             
             # Get session model to get the UUID
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
             
             if not session_model:
@@ -1087,8 +1128,9 @@ class ModeratorDatabase:
                 return False
 
             # Get session model
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
 
             if not session_model:
@@ -1173,15 +1215,16 @@ class ModeratorDatabase:
                 return False
             
             # Get session model
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
-            
+
             if not session_model:
-                logger.error(f"Session not found: {session_id}")
+                logger.warning(f"Session not found for module data storage: {session_id}")
                 db.close()
                 return False
-            
+
             # Extract patient_id from session if not provided
             if patient_id is None:
                 patient_id = session_model.patient_id
@@ -1253,8 +1296,9 @@ class ModeratorDatabase:
                 return []
             
             # Get session model
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
             
             if not session_model:
@@ -1329,8 +1373,9 @@ class ModeratorDatabase:
                 return None
             
             # Get session model first to get the UUID
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
             
             if not session_model:
@@ -1381,8 +1426,9 @@ class ModeratorDatabase:
                 return {}
             
             # Get session model first to get the UUID
+            session_uuid = self._convert_session_id_to_uuid(session_id)
             session_model = db.query(AssessmentSessionModel).filter(
-                AssessmentSessionModel.session_id == session_id
+                AssessmentSessionModel.session_id == session_uuid
             ).first()
             
             if not session_model:

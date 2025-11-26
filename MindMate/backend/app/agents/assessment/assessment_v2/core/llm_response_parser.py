@@ -312,9 +312,10 @@ Your task is to extract structured information from user responses.
         }.get(question.response_type, "QUESTION")
         
         # Build focused prompt - question first, then context
+        question_text = question.simple_text if hasattr(question, 'simple_text') and question.simple_text else getattr(question, 'text', 'Question')
         prompt_parts = [
             f"=== {question_type_label} ===",
-            f"QUESTION: {question.simple_text}",
+            f"QUESTION: {question_text}",
         ]
         
         # Add options for MCQ

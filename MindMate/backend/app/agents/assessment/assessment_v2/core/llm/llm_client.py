@@ -85,6 +85,12 @@ class LLMConfig:
     enable_cache: bool = True
     cache_ttl: int = 1800  # 30 minutes
     rate_limit_per_minute: int = 20
+    provider: str = "groq"  # groq, openrouter, or fallback
+    fallback_providers: List[str] = None  # Chain of fallback providers
+
+    def __post_init__(self):
+        if self.fallback_providers is None:
+            self.fallback_providers = ["groq", "openrouter", "rule_based"]
 
 
 @dataclass
@@ -221,22 +227,267 @@ class LLMWrapper:
         self.cache_hits = 0
         self.total_response_time = 0.0
         
-        logger.debug(f"LLMWrapper initialized | Model: {self.config.model}")
-    
-    def _load_config(self) -> LLMConfig:
-        """Load configuration from environment variables"""
-        # Prioritize Groq over OpenRouter
-        api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENROUTER_API_KEY", "")
-        service = "groq" if os.getenv("GROQ_API_KEY") else "openrouter"
+        # Reduce log verbosity for cleaner output
+        if not any([os.getenv("GROQ_API_KEY"), os.getenv("OPENROUTER_API_KEY")]):
+            logger.info("No LLM API keys found - using rule-based analysis only")
+        else:
+            logger.debug(f"LLMWrapper initialized | Primary: {self.config.provider} | Fallbacks: {self.config.fallback_providers}")
 
-        if service == "groq":
+    def _get_provider_config(self, provider: str) -> LLMConfig:
+        """Get configuration for a specific provider"""
+        if provider == "groq":
+            groq_key = os.getenv("GROQ_API_KEY", "")
+            return LLMConfig(
+                model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+                api_key=groq_key,
+                base_url=os.getenv("GROQ_BASE_URL", "https://api.groq.com"),
+                max_tokens=int(os.getenv("GROQ_MAX_TOKENS", "800")),
+                temperature=float(os.getenv("GROQ_TEMPERATURE", "0.7")),
+                timeout=int(os.getenv("GROQ_TIMEOUT", "30")),
+                max_retries=int(os.getenv("GROQ_MAX_RETRIES", "2")),
+                enable_cache=self.config.enable_cache,
+                rate_limit_per_minute=int(os.getenv("GROQ_RATE_LIMIT", "20")),
+                provider="groq"
+            )
+        elif provider == "openrouter":
+            openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+            return LLMConfig(
+                model=os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-pro-exp-03-25:free"),
+                api_key=openrouter_key,
+                base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+                max_tokens=int(os.getenv("OPENROUTER_MAX_TOKENS", "800")),
+                temperature=float(os.getenv("OPENROUTER_TEMPERATURE", "0.7")),
+                timeout=int(os.getenv("OPENROUTER_TIMEOUT", "30")),
+                max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES", "2")),
+                enable_cache=self.config.enable_cache,
+                rate_limit_per_minute=int(os.getenv("OPENROUTER_RATE_LIMIT", "20")),
+                provider="openrouter"
+            )
+        else:
+            # Rule-based fallback
+            return LLMConfig(
+                model="rule_based_fallback",
+                api_key="",
+                base_url="",
+                max_tokens=self.config.max_tokens,
+                temperature=self.config.temperature,
+                timeout=self.config.timeout,
+                max_retries=0,
+                enable_cache=False,
+                rate_limit_per_minute=10,
+                provider="rule_based"
+            )
+
+    def _generate_with_provider(self, provider: str, messages: List[Dict[str, str]], **kwargs) -> LLMResponse:
+        """Generate response using a specific provider"""
+        provider_config = self._get_provider_config(provider)
+        start_time = time.time()
+
+        if provider == "rule_based":
+            # Rule-based fallback - no API call needed
+            return self._generate_rule_based_response(messages, **kwargs)
+
+        # Temporarily switch config for this call
+        original_config = self.config
+        self.config = provider_config
+
+        try:
+            # Make API call with retries
+            for attempt in range(provider_config.max_retries):
+                try:
+                    # Rate limiting
+                    self.rate_limiter.acquire()
+
+                    # Circuit breaker protection
+                    result = self.circuit_breaker.call(
+                        self._make_api_call,
+                        messages,
+                        **kwargs
+                    )
+
+                    # Extract content
+                    content = result["choices"][0]["message"]["content"]
+                    content = self._clean_response(content)
+
+                    response_time = time.time() - start_time
+                    return LLMResponse(
+                        content=content,
+                        success=True,
+                        tokens_used=result.get("usage", {}).get("total_tokens"),
+                        response_time=response_time
+                    )
+
+                except Exception as e:
+                    logger.warning(f"{provider} API call attempt {attempt + 1} failed: {e}")
+                    if attempt == provider_config.max_retries - 1:
+                        raise e
+
+                # Short backoff for faster failure
+                time.sleep(provider_config.retry_delay * (attempt + 1))
+
+        finally:
+            # Restore original config
+            self.config = original_config
+
+        # This shouldn't be reached, but just in case
+        raise Exception(f"All {provider} attempts failed")
+
+    def _generate_rule_based_response(self, messages: List[Dict[str, str]], **kwargs) -> LLMResponse:
+        """Generate rule-based response when LLM providers are unavailable"""
+        start_time = time.time()
+
+        # Extract the user message
+        user_message = ""
+        system_prompt = ""
+
+        for msg in messages:
+            if msg["role"] == "system":
+                system_prompt = msg["content"]
+            elif msg["role"] == "user":
+                user_message = msg["content"]
+
+        # Simple rule-based diagnostic analysis
+        response_content = self._rule_based_diagnostic_analysis(user_message, system_prompt)
+
+        return LLMResponse(
+            content=response_content,
+            success=True,
+            response_time=time.time() - start_time
+        )
+
+    def _rule_based_diagnostic_analysis(self, user_message: str, system_prompt: str) -> str:
+        """Rule-based diagnostic analysis as final fallback - returns JSON format expected by DA module"""
+        # This is a rule-based system that returns JSON in the format expected by the DA module
+
+        lower_message = user_message.lower()
+        lower_system = system_prompt.lower()
+
+        # Check for depression indicators
+        depression_keywords = [
+            "sad", "depressed", "hopeless", "worthless", "suicidal", "tired", "fatigue",
+            "no energy", "no motivation", "can't sleep", "oversleep", "appetite change",
+            "weight loss", "concentration", "decision making"
+        ]
+
+        # Check for anxiety indicators
+        anxiety_keywords = [
+            "anxious", "worried", "panic", "fear", "nervous", "restless", "tense",
+            "racing heart", "sweating", "trembling", "avoid", "phobia"
+        ]
+
+        # Check for trauma indicators
+        trauma_keywords = [
+            "trauma", "ptsd", "flashback", "nightmare", "trigger", "avoidance",
+            "hypervigilant", "startle", "emotional numb"
+        ]
+
+        depression_score = sum(1 for keyword in depression_keywords if keyword in lower_message)
+        anxiety_score = sum(1 for keyword in anxiety_keywords if keyword in lower_message)
+        trauma_score = sum(1 for keyword in trauma_keywords if keyword in lower_message)
+
+        # Determine primary concern and create structured diagnosis
+        scores = {
+            "depressive symptoms": depression_score,
+            "anxiety symptoms": anxiety_score,
+            "trauma-related symptoms": trauma_score
+        }
+
+        max_score = max(scores.values())
+
+        if max_score >= 2:
+            primary_concern = max(scores, key=scores.get)
+            severity = "moderate" if max_score >= 3 else "mild"
+            confidence = min(0.7, max_score / 5.0)  # Scale confidence based on symptom count
+
+            # Create diagnosis based on primary concern
+            if "depressive" in primary_concern:
+                diagnosis_name = "Depressive Disorder"
+                dsm5_code = "296.3"
+                criteria = ["Depressed mood", "Anhedonia", "Fatigue", "Concentration issues"]
+            elif "anxiety" in primary_concern:
+                diagnosis_name = "Anxiety Disorder"
+                dsm5_code = "300.02"
+                criteria = ["Excessive anxiety", "Worry", "Restlessness", "Physical symptoms"]
+            elif "trauma" in primary_concern:
+                diagnosis_name = "Trauma-Related Disorder"
+                dsm5_code = "309.81"
+                criteria = ["Trauma exposure", "Intrusion symptoms", "Avoidance", "Arousal changes"]
+            else:
+                diagnosis_name = "Mental Health Concerns"
+                dsm5_code = "To be determined"
+                criteria = ["Reported symptoms present"]
+
+            diagnosis_result = {
+                "primary_diagnosis": {
+                    "name": diagnosis_name,
+                    "severity": severity,
+                    "dsm5_code": dsm5_code,
+                    "criteria_met": criteria[:max_score],  # Only include criteria we detected
+                    "confidence": confidence
+                },
+                "differential_diagnoses": [
+                    {"name": "Anxiety Disorder", "reason": "Anxiety symptoms present", "confidence": anxiety_score / max(1, max_score)},
+                    {"name": "Depressive Disorder", "reason": "Mood symptoms present", "confidence": depression_score / max(1, max_score)},
+                    {"name": "Adjustment Disorder", "reason": "Recent stressors may be contributing", "confidence": 0.3}
+                ],
+                "confidence": confidence,
+                "reasoning": f"Rule-based analysis identified {primary_concern} based on {max_score} symptom indicators. This represents a preliminary assessment using pattern recognition and should be confirmed by a qualified mental health professional.",
+                "matched_criteria": criteria[:max_score],
+                "diagnostic_notes": f"Analysis performed using rule-based pattern matching. {max_score} symptoms detected from assessment data. Professional evaluation recommended for definitive diagnosis."
+            }
+
+        else:
+            # No clear diagnosis pattern detected
+            diagnosis_result = {
+                "primary_diagnosis": {
+                    "name": "Mental Health Assessment Completed",
+                    "severity": "preliminary",
+                    "dsm5_code": "Pending",
+                    "criteria_met": ["Assessment completed"],
+                    "confidence": 0.2
+                },
+                "differential_diagnoses": [
+                    {"name": "No Clear Diagnosis", "reason": "Insufficient symptoms for specific diagnosis", "confidence": 0.5},
+                    {"name": "Further Evaluation Needed", "reason": "Additional assessment may be required", "confidence": 0.3}
+                ],
+                "confidence": 0.2,
+                "reasoning": "Rule-based analysis did not identify sufficient symptom patterns for a specific diagnosis. This may indicate mild symptoms, early-stage concerns, or the need for more detailed assessment.",
+                "matched_criteria": ["Assessment completed"],
+                "diagnostic_notes": "Rule-based analysis found limited symptom indicators. Professional evaluation recommended to determine if mental health concerns are present."
+            }
+
+        # Return as JSON string
+        return json.dumps(diagnosis_result, indent=2)
+
+    def _load_config(self) -> LLMConfig:
+        """Load configuration from environment variables with fallback chain"""
+        # Determine primary provider based on available API keys
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+
+        # Default fallback chain: Groq -> OpenRouter -> Rule-based
+        fallback_providers = ["groq", "openrouter", "rule_based"]
+
+        # Determine primary provider
+        if groq_key:
+            primary_provider = "groq"
+            default_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
             default_base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com")
-            default_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
             rate_limit = int(os.getenv("GROQ_RATE_LIMIT", "20"))
-        else:  # openrouter
-            default_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+            api_key = groq_key
+        elif openrouter_key:
+            primary_provider = "openrouter"
             default_model = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-pro-exp-03-25:free")
+            default_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
             rate_limit = int(os.getenv("OPENROUTER_RATE_LIMIT", "20"))
+            api_key = openrouter_key
+        else:
+            # No API keys available, fall back to rule-based
+            primary_provider = "rule_based"
+            default_model = "rule_based_fallback"
+            default_base_url = ""
+            rate_limit = 10
+            api_key = ""
 
         # Normalize base URL - remove any existing /openai/v1 or /v1 paths
         # and ensure it's just the base domain
@@ -252,15 +503,17 @@ class LLMWrapper:
         default_base_url = default_base_url.rstrip("/")
 
         return LLMConfig(
-            model=os.getenv("OPENROUTER_MODEL") or os.getenv("GROQ_MODEL", default_model),
+            model=os.getenv("LLM_MODEL", default_model),
             api_key=api_key,
             base_url=default_base_url,
-            max_tokens=int(os.getenv("OPENROUTER_MAX_TOKENS") or os.getenv("GROQ_MAX_TOKENS", "800")),
-            temperature=float(os.getenv("OPENROUTER_TEMPERATURE") or os.getenv("GROQ_TEMPERATURE", "0.7")),
-            timeout=int(os.getenv("OPENROUTER_TIMEOUT") or os.getenv("GROQ_TIMEOUT", "30")),
-            max_retries=int(os.getenv("OPENROUTER_MAX_RETRIES") or os.getenv("GROQ_MAX_RETRIES", "2")),
-            enable_cache=os.getenv("OPENROUTER_ENABLE_CACHE") or os.getenv("GROQ_ENABLE_CACHE", "true").lower() == "true",
-            rate_limit_per_minute=rate_limit
+            max_tokens=int(os.getenv("LLM_MAX_TOKENS", "800")),
+            temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
+            timeout=int(os.getenv("LLM_TIMEOUT", "30")),
+            max_retries=int(os.getenv("LLM_MAX_RETRIES", "2")),
+            enable_cache=os.getenv("LLM_ENABLE_CACHE", "true").lower() == "true",
+            rate_limit_per_minute=rate_limit,
+            provider=primary_provider,
+            fallback_providers=fallback_providers
         )
     
     def _make_api_call(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
@@ -417,66 +670,43 @@ class LLMWrapper:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
         
-        # Make API call with retries
-        for attempt in range(self.config.max_retries):
+        # Try providers in fallback chain: Groq → OpenRouter → Rule-based
+        for provider in self.config.fallback_providers:
+            logger.info(f"Attempting to generate response with provider: {provider}")
             try:
-                # Rate limiting
-                self.rate_limiter.acquire()
-                
-                # Circuit breaker protection
-                result = self.circuit_breaker.call(
-                    self._make_api_call,
-                    messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature
-                )
-                
-                # Extract content
-                content = result["choices"][0]["message"]["content"]
-                content = self._clean_response(content)
-                
-                # Cache successful response
-                if use_cache and self.cache:
+                response = self._generate_with_provider(provider, messages, **{
+                    "max_tokens": max_tokens,
+                    "temperature": temperature
+                })
+
+                # Cache successful response (skip rule-based as it's not cacheable)
+                if response.success and use_cache and self.cache and provider != "rule_based":
                     cache_key = self.cache._generate_key(
                         prompt, system_prompt,
                         max_tokens=max_tokens or self.config.max_tokens,
                         temperature=temperature or self.config.temperature
                     )
-                    self.cache.set(cache_key, content, {
-                        "tokens_used": result.get("usage", {}).get("total_tokens"),
-                        "model": self.config.model
+                    self.cache.set(cache_key, response.content, {
+                        "tokens_used": response.tokens_used,
+                        "model": self.config.model,
+                        "provider": provider
                     })
-                
+
                 self.success_count += 1
-                response_time = time.time() - start_time
-                self.total_response_time += response_time
-                
-                return LLMResponse(
-                    content=content,
-                    success=True,
-                    tokens_used=result.get("usage", {}).get("total_tokens"),
-                    response_time=response_time
-                )
-                
+                response.response_time = time.time() - start_time
+                logger.info(f"Successfully generated response using {provider}")
+                return response
+
             except Exception as e:
-                logger.warning(f"LLM API call attempt {attempt + 1} failed: {e}")
-                if attempt == self.config.max_retries - 1:
-                    response_time = time.time() - start_time
-                    return LLMResponse(
-                        content="",
-                        success=False,
-                        error=str(e),
-                        response_time=response_time
-                    )
-                
-                # Short backoff for faster failure
-                time.sleep(self.config.retry_delay)
-        
-        # Should never reach here
+                logger.warning(f"Provider {provider} failed: {e}")
+                continue
+
+        # All providers failed
+        logger.error("All LLM providers failed, returning error response")
         return LLMResponse(
             content="",
             success=False,
-            error="All retry attempts failed",
+            error="All LLM providers (Groq, OpenRouter, Rule-based) failed",
             response_time=time.time() - start_time
         )
     

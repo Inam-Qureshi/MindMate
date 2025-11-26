@@ -259,7 +259,7 @@ const AssessmentPage = ({
       const initialMessage = {
         id: `msg_${Date.now()}`,
         role: 'assistant',
-        content: response.message || response.greeting || 'Hello! Welcome to your assessment. Let\'s begin with some basic information.',
+        content: response.message || response.greeting || 'Hello! Welcome to MindMate\'s comprehensive mental health assessment. Let\'s begin your journey to better mental wellness together!',
         timestamp: new Date().toISOString()
       };
       

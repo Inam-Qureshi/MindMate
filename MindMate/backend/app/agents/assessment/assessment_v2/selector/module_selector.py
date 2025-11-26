@@ -45,7 +45,6 @@ class AssessmentDataCollection:
     """Complete collection of assessment data"""
     demographics: Dict[str, Any]
     presenting_concern: Dict[str, Any]
-    risk_assessment: Dict[str, Any]
     scid_sc_responses: Dict[str, Any]
     session_metadata: Dict[str, Any]
     
@@ -80,17 +79,9 @@ class AssessmentDataCollection:
         if concern.get('severity'):
             summary_parts.append(f"Severity Level: {concern.get('severity')}.")
         
-        # Risk assessment summary
-        risk = self.risk_assessment
-        if risk.get('suicidal_ideation'):
-            summary_parts.append(f"Suicidal Ideation: {risk.get('suicidal_ideation')}.")
-        
-        if risk.get('self_harm'):
-            summary_parts.append(f"Self-Harm History: {risk.get('self_harm')}.")
-        
-        if risk.get('risk_level'):
-            summary_parts.append(f"Overall Risk Level: {risk.get('risk_level')}.")
-        
+        # Risk assessment summary (removed)
+        risk_level = "not_assessed"  # Risk assessment removed
+
         # SCID-SC screening responses summary
         scid_sc = self.scid_sc_responses
         if scid_sc.get('positive_screens'):
@@ -560,14 +551,14 @@ Your response (JSON only):"""
                 score *= 1.1
             
             # Risk factor weighting
-            risk_level = assessment_data.risk_assessment.get('risk_level', '').lower()
+            risk_level = "not_assessed"
             if risk_level == "high":
                 score *= 1.4
             elif risk_level == "moderate":
                 score *= 1.1
             
             # Suicide/risk priority boost
-            if assessment_data.risk_assessment.get('suicide_ideation') or assessment_data.risk_assessment.get('past_attempts'):
+            if False:  # Risk assessment removed - no suicide risk data
                 if module_id == "MDD":  # MDD often associated with suicide risk
                     score *= 1.5
             
@@ -747,7 +738,6 @@ def select_scid_cv_modules_for_session(
     assessment_data = AssessmentDataCollection(
         demographics=session_data.get('demographics', {}),
         presenting_concern=session_data.get('presenting_concern', {}),
-        risk_assessment=session_data.get('risk_assessment', {}),
         scid_sc_responses=session_data.get('scid_screening', {}),
         session_metadata=session_data.get('metadata', {})
     )

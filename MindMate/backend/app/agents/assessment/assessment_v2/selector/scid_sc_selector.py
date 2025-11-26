@@ -51,12 +51,10 @@ class AssessmentDataSummary:
     Attributes:
         demographics: Demographic information dict
         presenting_concern: Presenting concern data dict
-        risk_assessment: Risk assessment results dict
         session_metadata: Session metadata dict
     """
     demographics: Dict[str, Any]
     presenting_concern: Dict[str, Any]
-    risk_assessment: Dict[str, Any]
     session_metadata: Dict[str, Any]
     
     def to_dict(self) -> Dict[str, Any]:
@@ -70,7 +68,6 @@ class AssessmentDataSummary:
         return cls(
             demographics=data.get('demographics', {}),
             presenting_concern=data.get('presenting_concern', {}),
-            risk_assessment=data.get('risk_assessment', {}),
             session_metadata=data.get('session_metadata', {})
         )
 
@@ -181,9 +178,7 @@ class SCID_SC_ItemsSelector:
             if session_state and session_state.module_results.get("presenting_concern"):
                 concern_data = session_state.module_results["presenting_concern"]
 
-            # Get risk assessment data
-            if session_state and session_state.module_results.get("risk_assessment"):
-                risk_data = session_state.module_results["risk_assessment"]
+            # Risk assessment data removed - no longer collected
 
             # Also check module data for additional information
             module_data = db.get_module_data(session_id)
@@ -195,13 +190,10 @@ class SCID_SC_ItemsSelector:
                     demographics_data.update(content)
                 elif data_type in ["concern", "presenting_concern"]:
                     concern_data.update(content)
-                elif data_type in ["risk", "risk_assessment"]:
-                    risk_data.update(content)
 
             return AssessmentDataSummary(
                 demographics=demographics_data,
                 presenting_concern=concern_data,
-                risk_assessment=risk_data,
                 session_metadata=session_metadata
             )
 
@@ -211,7 +203,6 @@ class SCID_SC_ItemsSelector:
             return AssessmentDataSummary(
                 demographics={},
                 presenting_concern={},
-                risk_assessment={},
                 session_metadata={}
             )
 
@@ -228,7 +219,7 @@ class SCID_SC_ItemsSelector:
         try:
             demo = data.demographics
             concern = data.presenting_concern
-            risk = data.risk_assessment
+            risk_level = "not_assessed"  # Risk assessment removed
 
             # Build patient description
             parts = []
@@ -432,7 +423,6 @@ class SCID_SC_ItemsSelector:
             "patient_summary": patient_summary,
             "demographics": data.demographics,
             "presenting_concern": data.presenting_concern,
-            "risk_assessment": data.risk_assessment,
             "session_metadata": cleaned_metadata
         }
 
@@ -514,7 +504,7 @@ Your JSON response:"""
         
         # Prepare text for matching
         concern_text = json.dumps(data.presenting_concern).lower()
-        risk_text = json.dumps(data.risk_assessment).lower()
+        risk_text = "risk assessment not performed"
         demo_text = json.dumps(data.demographics).lower()
         all_text = f"{concern_text} {risk_text} {demo_text}".lower()
         
@@ -576,14 +566,14 @@ Your JSON response:"""
                 score *= 1.0
             
             # Risk factor weighting
-            risk_level = data.risk_assessment.get("risk_level", "").lower()
+            risk_level = "not_assessed"
             if risk_level == "high":
                 score *= 1.4
             elif risk_level == "moderate":
                 score *= 1.1
             
             # Suicide/self-harm priority boost
-            if data.risk_assessment.get("suicide_ideation") or data.risk_assessment.get("past_attempts"):
+            if False:  # Risk assessment removed - no suicide risk data
                 if "suicide" in item_id.lower() or "sui" in item_id.lower() or "self" in item_id.lower():
                     score *= 2.0  # Double score for risk items when risk is present
             
@@ -1067,7 +1057,6 @@ def create_patient_data_summary(session_id: str) -> AssessmentDataSummary:
             summary = AssessmentDataSummary(
                 demographics={},
                 presenting_concern={},
-                risk_assessment={},
                 session_metadata={}
             )
     

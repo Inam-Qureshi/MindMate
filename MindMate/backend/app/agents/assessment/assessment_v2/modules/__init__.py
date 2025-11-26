@@ -30,8 +30,7 @@ from .other_disorders import (
 # Basic Information Modules
 from .basic_info import (
     create_demographics_module,
-    create_concern_module,
-    create_risk_assessment_module
+    create_concern_module
 )
 
 # Module Registry
@@ -39,7 +38,6 @@ MODULE_REGISTRY = {
     # Basic Information
     "DEMOGRAPHICS": create_demographics_module,
     "CONCERN": create_concern_module,
-    "RISK_ASSESSMENT": create_risk_assessment_module,
     # Mood Disorders
     "MDD": create_mdd_module,
     "BIPOLAR": create_bipolar_module,
@@ -77,7 +75,6 @@ __all__ = [
     # Basic Information Module creators
     "create_demographics_module",
     "create_concern_module",
-    "create_risk_assessment_module",
     # Mood Disorder Module creators
     "create_mdd_module",
     "create_bipolar_module",

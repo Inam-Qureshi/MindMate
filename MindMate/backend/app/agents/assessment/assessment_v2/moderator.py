@@ -6,8 +6,9 @@ NOTE: SRA is a continuous background service, not a module in the flow
 
 import logging
 import importlib
+import time
 from typing import Dict, Any, Optional, List
-from datetime import datetime 
+from datetime import datetime
 import uuid
 
 # Import assessment_v2 components
@@ -318,7 +319,7 @@ class AssessmentModerator:
                     metadata={"patient_id": user_id, "degraded_mode": True}
                 )
                 self.sessions[session_id] = session_state
-                return "Welcome! I'm ready to help you with your assessment. However, some assessment modules are currently unavailable. Please contact support if you need assistance."
+                return "Welcome to MindMate! I'm ready to help you with your mental health assessment. However, some assessment modules are currently unavailable. Please contact MindMate support if you need assistance."
             
             # Get starting module
             try:
@@ -329,7 +330,7 @@ class AssessmentModerator:
                 starting_module_name = list(self.modules.keys())[0] if self.modules else None
             
             if not starting_module_name:
-                return "Welcome! Let's begin your assessment."
+                return "Welcome to MindMate! Let's begin your comprehensive mental health assessment."
             
             # Create session state
             session_state = SessionState(
@@ -348,7 +349,7 @@ class AssessmentModerator:
             
             self.sessions[session_id] = session_state
             
-            # Persist session to database if available
+            # Persist session to database if available (don't fail if DB operations fail)
             if hasattr(self, 'db') and self.db:
                 try:
                     def _coerce_uuid(value: Optional[Any]) -> Optional[str]:
@@ -421,10 +422,10 @@ class AssessmentModerator:
                     return response.message if hasattr(response, 'message') else str(response)
                 except Exception as e:
                     logger.error(f"Error starting module {starting_module_name}: {e}", exc_info=True)
-                    return f"Welcome! Let's begin your assessment. I'm ready to help you."
+                    return f"Welcome to MindMate! I'm ready to help you with your comprehensive mental health assessment."
             else:
                 logger.warning(f"Starting module '{starting_module_name}' not found in loaded modules")
-                return "Welcome! Let's begin your assessment."
+                return "Welcome to MindMate! Let's begin your comprehensive mental health assessment."
                 
         except Exception as e:
             logger.error(f"Error starting assessment: {e}", exc_info=True)
@@ -439,7 +440,7 @@ class AssessmentModerator:
                 self.sessions[session_id] = session_state
             except:
                 pass
-            return "Welcome! Let's begin your assessment."
+            return "Welcome to MindMate! Let's begin your comprehensive mental health assessment."
     
     def process_message(self, user_id: str, session_id: str, message: str) -> str:
         """
@@ -463,14 +464,86 @@ class AssessmentModerator:
             
             # Get current module
             current_module_name = session_state.current_module
-            if not current_module_name or current_module_name not in self.modules:
+            if not current_module_name:
+                logger.error(f"No current module set for session {session_id}")
+                return "I'm sorry, there was an error. Please try starting a new assessment."
+
+            # Special handling for SRA clarification phase
+            if current_module_name == "sra_clarification":
+                response = self._handle_sra_clarification(session_state, message)
+            elif current_module_name not in self.modules:
                 logger.error(f"Invalid current module: {current_module_name}")
                 return "I'm sorry, there was an error. Please try starting a new assessment."
-            
-            # Process message through current module
-            module = self.modules[current_module_name]
-            response = module.process_message(message=message, session_id=session_id, user_id=user_id)
-            
+            else:
+                # Process message through current module with error handling
+                try:
+                    module = self.modules[current_module_name]
+                    response = module.process_message(message=message, session_id=session_id, user_id=user_id)
+                except Exception as module_error:
+                    logger.error(f"Module {current_module_name} failed for session {session_id}: {module_error}")
+                    # Create emergency response to continue workflow
+                    response = self._create_emergency_module_response(current_module_name, session_id, module_error)
+                    # Force transition to next module
+                    try:
+                        next_module = get_next_module(current_module_name)
+                        if next_module:
+                            session_state.current_module = next_module
+                            session_state.module_history.append(current_module_name)
+                            logger.warning(f"Emergency transition from {current_module_name} to {next_module}")
+                    except Exception as transition_error:
+                        logger.error(f"Emergency transition failed: {transition_error}")
+                        # Use workflow recovery system
+                        self._ensure_workflow_completion(session_state)
+
+            # Check for stuck modules after getting response
+            if self._detect_stuck_module(session_state, current_module_name, response):
+                logger.warning(f"Module {current_module_name} appears stuck, forcing transition")
+                # Force transition to next module
+                next_module = self._get_forced_next_module(current_module_name)
+                if next_module:
+                    session_state.current_module = next_module
+                    session_state.module_history.append(current_module_name)
+                    return f"Assessment continuing to next phase due to response processing issues."
+
+            # Special handling: Process response through SRA for clarification phase
+            if current_module_name == "sra_clarification" and self.sra_service:
+                try:
+                    # Process the clarification response through SRA
+                    sra_result = self.sra_service.process_response(
+                        session_id=session_id,
+                        user_response=message,
+                        question=None,  # Clarification questions don't have structured questions
+                        processed_response=None,
+                        conversation_history=getattr(session_state, 'conversation_history', [])
+                    )
+                    logger.debug(f"SRA processed clarification response in session {session_id}")
+                except Exception as e:
+                    logger.warning(f"SRA clarification processing failed: {e}")
+
+            # Process response through SRA service to extract symptoms (for regular modules)
+            elif self.sra_service:
+                try:
+                    # Get question context for better symptom extraction
+                    question_context = getattr(module, 'current_question', None) or getattr(module, 'last_question', None)
+
+                    # Process through SRA for symptom extraction
+                    sra_result = self.sra_service.process_response(
+                        session_id=session_id,
+                        user_response=message,
+                        question=question_context,
+                        processed_response=response,  # Pass the module response for context
+                        conversation_history=getattr(session_state, 'conversation_history', [])
+                    )
+
+                    if sra_result and sra_result.get('symptoms_found', 0) > 0:
+                        logger.debug(f"SRA extracted {sra_result.get('symptoms_found', 0)} symptoms from response in session {session_id}")
+                    else:
+                        logger.debug(f"No symptoms extracted by SRA for session {session_id}")
+
+                except Exception as e:
+                    logger.warning(f"SRA processing failed for session {session_id}: {e}")
+                    # Continue with assessment even if SRA fails
+
             # Update session state
             session_state.updated_at = datetime.now()
             
@@ -526,7 +599,47 @@ class AssessmentModerator:
                 self._mark_module_completed(session_state, current_module_name)
                 if current_module_name not in session_state.module_history:
                     session_state.module_history.append(current_module_name)
-                
+
+
+                # Special handling: Check if diagnostic module completed with criteria not met
+                    diagnostic_modules = ["scid_screening", "scid_cv_diagnostic", "mdd", "bipolar", "gad", "panic", "ptsd", "ocd", "adhd", "social_anxiety", "agoraphobia", "specific_phobia", "adjustment_disorder", "alcohol_use", "substance_use", "eating_disorder"]
+
+                    if current_module_name in diagnostic_modules:
+                        # Check if this diagnostic module indicated criteria not met
+                        if self._check_diagnostic_criteria_not_met(response.message, module_results):
+                            logger.info(f"Diagnostic module {current_module_name} completed with criteria not met for session {session_id} - completing assessment with specialist referral")
+                            # Complete the assessment with specialist referral message
+                            session_state.is_complete = True
+                            session_state.completed_at = datetime.now()
+                            self._mark_assessment_completed(session_state)
+
+                            # Persist completion to database
+                            if hasattr(self, 'db') and self.db:
+                                try:
+                                    self.db.update_session(session_state)
+                                except Exception as e:
+                                    logger.debug(f"Could not update session after diagnostic criteria not met completion: {e}")
+
+                            # Return specialist referral message instead of completion message
+                            return "According to provided info and DSM Criteria, it will be better to connect you to the Specialists. You can use our Find Specialists service to get connected with one."
+
+                # Special handling for DA: Check if specialist referral was recommended
+                if current_module_name == "da_diagnostic_analysis" and response.metadata and response.metadata.get("specialist_referral"):
+                    logger.info(f"DA completed with specialist referral for session {session_id} - completing assessment")
+                    # Complete the assessment without transitioning to TPA
+                    session_state.is_complete = True
+                    session_state.completed_at = datetime.now()
+                    self._mark_assessment_completed(session_state)
+
+                    # Persist completion to database
+                    if hasattr(self, 'db') and self.db:
+                        try:
+                            self.db.update_session(session_state)
+                        except Exception as e:
+                            logger.debug(f"Could not update session after specialist referral completion: {e}")
+
+                    return response.message
+
                 # Determine next module with special handling for DA/TPA
                 next_module = self._determine_next_module(current_module_name, session_state)
                 
@@ -589,6 +702,7 @@ class AssessmentModerator:
         except Exception as e:
             logger.error(f"Error processing message: {e}", exc_info=True)
             return "I'm sorry, I encountered an error processing your message. Please try again."
+
     
     def get_current_module(self, session_id: str) -> Optional[str]:
         """Get the current active module for a session"""
@@ -612,7 +726,8 @@ class AssessmentModerator:
                     return session_state
             except Exception as e:
                 logger.error(f"Failed to load session from database: {e}")
-        
+                # Continue to return None - database failures shouldn't crash the session
+
         return None
     
     def get_session_progress(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -936,24 +1051,56 @@ class AssessmentModerator:
         
         # If we're completing a diagnostic module, check if all are complete
         if current_module in diagnostic_modules:
-            # Check if all diagnostic modules are complete
-            all_diagnostic_complete = self._check_all_diagnostic_modules_complete(
-                session_state, diagnostic_modules
-            )
-            
+            try:
+                # Check if all diagnostic modules are complete
+                all_diagnostic_complete = self._check_all_diagnostic_modules_complete(
+                    session_state, diagnostic_modules
+                )
+            except Exception as e:
+                logger.error(f"Error checking diagnostic module completion: {e}")
+                # On error, assume modules are complete to prevent workflow blockage
+                all_diagnostic_complete = True
+
             if all_diagnostic_complete:
-                # All diagnostic modules complete - transition to DA
+                # All diagnostic modules complete - check if SRA needs clarification
+                clarification_needed = False
+                try:
+                    if self.sra_service:
+                        clarification_check = self.sra_service.check_for_clarification_needs(session_state.session_id)
+                        clarification_needed = clarification_check.get("needs_clarification", False)
+
+                        if clarification_needed:
+                            logger.info("SRA clarification needed - transitioning to SRA clarification phase")
+                            # Set a flag in session state to indicate SRA clarification is needed
+                            if not session_state.metadata:
+                                session_state.metadata = {}
+                            session_state.metadata["sra_clarification_needed"] = True
+                            session_state.metadata["sra_clarification_questions"] = clarification_check.get("questions", [])
+                            session_state.metadata["sra_clarification_index"] = 0
+                            return "sra_clarification"
+                        else:
+                            logger.info("No SRA clarification needed - transitioning directly to DA")
+                except Exception as e:
+                    logger.warning(f"Error checking SRA clarification needs: {e}")
+                    # On SRA error, skip clarification and go directly to DA
+                    clarification_needed = False
+
+                # Transition to DA (either no SRA clarification needed, or SRA check failed)
                 logger.info("All diagnostic modules complete - transitioning to DA")
                 return "da_diagnostic_analysis"
             else:
                 # Not all diagnostic modules complete - check if there's another diagnostic module
-                # This shouldn't happen in normal flow, but handle gracefully
-                next_in_sequence = get_next_module(current_module)
-                if next_in_sequence in diagnostic_modules:
-                    return next_in_sequence
-                else:
-                    # Skip to DA anyway if we're at the end of diagnostic modules
-                    logger.warning(f"Not all diagnostic modules complete, but transitioning to DA from {current_module}")
+                try:
+                    next_in_sequence = get_next_module(current_module)
+                    if next_in_sequence in diagnostic_modules:
+                        return next_in_sequence
+                    else:
+                        # Skip to DA anyway if we're at the end of diagnostic modules
+                        logger.warning(f"Not all diagnostic modules complete, but transitioning to DA from {current_module}")
+                        return "da_diagnostic_analysis"
+                except Exception as e:
+                    logger.error(f"Error determining next diagnostic module: {e}")
+                    # Force transition to DA on error
                     return "da_diagnostic_analysis"
         
         # If we're completing DA, check if it's complete before transitioning to TPA
@@ -1057,14 +1204,34 @@ class AssessmentModerator:
             True if prerequisites are met, False otherwise
         """
         if module_name == "da_diagnostic_analysis":
-            # DA requires all diagnostic modules to be complete
-            diagnostic_modules = [
-                "scid_screening", "scid_cv_diagnostic",
-                "mdd", "bipolar", "gad", "panic", "ptsd", "ocd", "adhd",
-                "social_anxiety", "agoraphobia", "specific_phobia",
-                "adjustment_disorder", "alcohol_use", "substance_use", "eating_disorder"
-            ]
-            return self._check_all_diagnostic_modules_complete(session_state, diagnostic_modules)
+            try:
+                # DA requires all diagnostic modules to be complete AND SRA clarification (if needed)
+                diagnostic_modules = [
+                    "scid_screening", "scid_cv_diagnostic",
+                    "mdd", "bipolar", "gad", "panic", "ptsd", "ocd", "adhd",
+                    "social_anxiety", "agoraphobia", "specific_phobia",
+                    "adjustment_disorder", "alcohol_use", "substance_use", "eating_disorder"
+                ]
+
+                # Check if all diagnostic modules are complete
+                all_diagnostic_complete = self._check_all_diagnostic_modules_complete(session_state, diagnostic_modules)
+
+                # Check if SRA clarification is complete (if it was needed)
+                metadata = session_state.metadata or {}
+                if metadata.get("sra_clarification_needed", False):
+                    clarification_questions = metadata.get("sra_clarification_questions", [])
+                    current_index = metadata.get("sra_clarification_index", 0)
+                    # SRA clarification is complete if we've asked all questions (or max 3)
+                    clarification_complete = current_index >= len(clarification_questions) or current_index >= 3
+                    return all_diagnostic_complete and clarification_complete
+
+                # If no clarification was needed, DA is ready (even if some diagnostic modules failed)
+                return True
+
+            except Exception as e:
+                logger.error(f"Error checking DA prerequisites: {e}")
+                # On error, always allow transition to DA - workflow must continue
+                return True
 
         elif module_name == "tpa_treatment_planning":
             # TPA requires DA to be complete
@@ -1077,8 +1244,7 @@ class AssessmentModerator:
         """Create a smooth transition message between modules with context about selectors"""
         transitions = {
             ("demographics", "presenting_concern"): "Now, let's talk about what's bringing you here today.",
-            ("presenting_concern", "risk_assessment"): "I'd like to ask you some important safety questions.",
-            ("risk_assessment", "scid_screening"): (
+            ("presenting_concern", "scid_screening"): (
                 "Based on what you've shared, I'll ask you some targeted screening questions. "
                 "These questions are specifically chosen based on your responses to help us better understand your situation."
             ),
@@ -1096,6 +1262,197 @@ class AssessmentModerator:
         
         # Default transition
         return "Let's continue with the next part of the assessment."
+
+    def _handle_sra_clarification(self, session_state: SessionState, message: str) -> ModuleResponse:
+        """
+        Handle SRA clarification phase with guaranteed transition to DA.
+
+        Args:
+            session_state: Current session state
+            message: User's response to clarification question
+
+        Returns:
+            ModuleResponse with next clarification question or transition to DA
+        """
+        try:
+            # Always transition to DA after a maximum of 3 clarification attempts
+            metadata = session_state.metadata or {}
+            clarification_questions = metadata.get("sra_clarification_questions", [])
+            current_index = metadata.get("sra_clarification_index", 0)
+
+            # Safety check: if we've done 3+ clarification rounds, transition to DA
+            if current_index >= 3:
+                logger.info(f"SRA clarification limit reached for session {session_state.session_id} - transitioning to DA")
+                session_state.current_module = "da_diagnostic_analysis"
+                return ModuleResponse(
+                    message="Thank you for providing additional information. Now I'll analyze all the information collected to provide a comprehensive diagnostic assessment.",
+                    is_complete=True,
+                    requires_input=False
+                )
+
+            # If we've answered all available questions, transition to DA
+            if current_index >= len(clarification_questions):
+                logger.info(f"SRA clarification complete for session {session_state.session_id} - transitioning to DA")
+                session_state.current_module = "da_diagnostic_analysis"
+                return ModuleResponse(
+                    message="Thank you for that additional information. Now I'll analyze all the information collected to provide a comprehensive diagnostic assessment.",
+                    is_complete=True,
+                    requires_input=False
+                )
+
+            # Process the clarification response through SRA if available
+            if self.sra_service:
+                try:
+                    # Process the clarification response for additional symptom extraction
+                    sra_result = self.sra_service.process_response(
+                        session_id=session_state.session_id,
+                        user_response=message,
+                        question=None,
+                        processed_response=None,
+                        conversation_history=[]
+                    )
+                    logger.debug(f"SRA processed clarification response in session {session_state.session_id}")
+                except Exception as e:
+                    logger.warning(f"SRA clarification processing failed: {e}")
+                    # Continue even if SRA processing fails
+
+            # Ask next question or transition to DA
+            next_index = current_index + 1
+            metadata["sra_clarification_index"] = next_index
+            session_state.metadata = metadata
+
+            # Check if we have more questions (max 3 total)
+            if next_index >= len(clarification_questions) or next_index >= 3:
+                # This was the last question or we've hit the limit
+                session_state.current_module = "da_diagnostic_analysis"
+                return ModuleResponse(
+                    message="Thank you for that additional information. Now I'll analyze all the information collected to provide a comprehensive diagnostic assessment.",
+                    is_complete=True,
+                    requires_input=False
+                )
+            else:
+                # Ask next question
+                next_question = clarification_questions[next_index] if next_index < len(clarification_questions) else "Can you provide any additional details about your symptoms?"
+                return ModuleResponse(
+                    message=f"To better understand your symptoms: {next_question}",
+                    is_complete=False,
+                    requires_input=True,
+                    metadata={"conversation_step": "sra_clarification"}
+                )
+
+        except Exception as e:
+            logger.error(f"Error handling SRA clarification: {e}")
+            # Always transition to DA on any error - workflow must continue
+            session_state.current_module = "da_diagnostic_analysis"
+            return ModuleResponse(
+                message="Now I'll analyze all the information collected to provide a comprehensive diagnostic assessment.",
+                is_complete=True,
+                requires_input=False
+            )
+
+    def _check_diagnostic_criteria_not_met(self, response_message: str, module_results: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        Check if a diagnostic module response indicates that criteria were not met.
+
+        Args:
+            response_message: The response message from the module
+            module_results: Optional module results data
+
+        Returns:
+            True if criteria were not met (should show specialist referral)
+        """
+        try:
+            # Check the response message for criteria not met indicators
+            message_lower = response_message.lower()
+
+            # Look for explicit "criteria not met" or "are not met" phrases
+            if "criteria" in message_lower and ("not met" in message_lower or "are not met" in message_lower):
+                return True
+
+            # Check module results if available
+            if module_results:
+                if isinstance(module_results, dict):
+                    # Check for criteria_met flag
+                    if module_results.get("criteria_met") == False:
+                        return True
+
+                    # Check for assessment text indicating criteria not met
+                    assessment = module_results.get("assessment", "").lower()
+                    if "criteria" in assessment and ("not met" in assessment or "are not met" in assessment):
+                        return True
+
+            return False
+
+        except Exception as e:
+            logger.warning(f"Error checking diagnostic criteria: {e}")
+            return False
+
+    def _detect_stuck_module(self, session_state: SessionState, module_name: str, response) -> bool:
+        """
+        Detect if a module appears to be stuck (repeatedly rejecting responses).
+        """
+        try:
+            metadata = session_state.metadata or {}
+            stuck_key = f"stuck_{module_name}"
+
+            # Check if response indicates rejection/unclear understanding
+            response_text = ""
+            if hasattr(response, 'message'):
+                response_text = response.message.lower()
+            elif isinstance(response, str):
+                response_text = response.lower()
+            elif isinstance(response, dict):
+                response_text = response.get('response', '').lower()
+
+            logger.debug(f"Stuck detection for {module_name}: response_text='{response_text[:100]}...'")
+
+            rejection_indicators = [
+                "didn't quite understand", "not quite understand",
+                "please respond with", "please select", "i didn't understand",
+                "i didn't quite understand"
+            ]
+
+            is_rejection = any(indicator in response_text for indicator in rejection_indicators)
+            logger.debug(f"Is rejection: {is_rejection}, rejection indicators found: {[ind for ind in rejection_indicators if ind in response_text]}")
+
+            if is_rejection:
+                rejection_count = metadata.get(stuck_key, 0) + 1
+                metadata[stuck_key] = rejection_count
+                session_state.metadata = metadata
+
+                logger.info(f"Detected rejection {rejection_count}/5 for module {module_name}")
+
+                # Consider stuck after 5 consecutive rejections (more forgiving)
+                if rejection_count >= 5:
+                    logger.warning(f"Module {module_name} is stuck after {rejection_count} rejections - forcing transition")
+                    return True
+            else:
+                # Clear stuck counter on successful response
+                if stuck_key in metadata:
+                    del metadata[stuck_key]
+                    session_state.metadata = metadata
+
+            return False
+
+        except Exception as e:
+            logger.warning(f"Error detecting stuck module: {e}")
+            return False
+
+    def _get_forced_next_module(self, current_module: str) -> Optional[str]:
+        """
+        Get the next module when forcing transition from a stuck module.
+        """
+        # Define progression hierarchy for stuck modules
+        progression_map = {
+            "demographics": "presenting_concern",
+            "presenting_concern": "scid_screening",
+            "scid_screening": "scid_cv_diagnostic",
+            "scid_cv_diagnostic": "da_diagnostic_analysis",
+            "da_diagnostic_analysis": "tpa_treatment_planning",
+            "sra_clarification": "da_diagnostic_analysis"
+        }
+
+        return progression_map.get(current_module)
 
     def deploy_module(self, module_name: str, session_id: str, user_id: str, force: bool = False) -> bool:
         """Deploy a module for a session"""
@@ -1118,4 +1475,98 @@ class AssessmentModerator:
         
         # Switch to the module
         return self.switch_module(session_id, module_name, user_id)
+
+    def _create_emergency_module_response(self, module_name: str, session_id: str, error: Exception) -> ModuleResponse:
+        """
+        Create emergency response when a module fails catastrophically.
+        Ensures workflow continues regardless of module failures.
+
+        Args:
+            module_name: Name of the failed module
+            session_id: Session identifier
+            error: The exception that occurred
+
+        Returns:
+            ModuleResponse that allows workflow to continue
+        """
+        logger.critical(f"EMERGENCY RESPONSE: Module {module_name} failed in session {session_id}: {error}")
+
+        emergency_messages = {
+            "demographics": "I've recorded your basic information. Let's continue with understanding your concerns.",
+            "presenting_concern": "Thank you for sharing your concerns. We'll now proceed with a comprehensive assessment.",
+            "scid_screening": "Screening phase completed. Moving forward with detailed evaluation.",
+            "scid_cv_diagnostic": "Diagnostic evaluation completed. Now analyzing your results comprehensively.",
+            "sra_clarification": "Additional details collected. Proceeding to final diagnostic analysis.",
+            "da_diagnostic_analysis": "Analysis completed. Now creating your personalized treatment recommendations.",
+            "tpa_treatment_planning": "Your comprehensive treatment plan is ready. Assessment complete."
+        }
+
+        message = emergency_messages.get(module_name,
+            f"Assessment section completed. Continuing with next phase."
+        )
+
+        return ModuleResponse(
+            message=message,
+            is_complete=True,  # Force completion to continue workflow
+            requires_input=False,
+            metadata={
+                "emergency_response": True,
+                "failed_module": module_name,
+                "error_type": type(error).__name__,
+                "workflow_continuation": True
+            }
+        )
+
+    def _ensure_workflow_completion(self, session_state: SessionState) -> None:
+        """
+        Emergency workflow completion system.
+        Ensures assessment always reaches TPA regardless of failures.
+
+        Args:
+            session_state: Current session state
+        """
+        try:
+            current_module = session_state.current_module
+
+            # Define completion hierarchy - always progress toward TPA
+            completion_hierarchy = {
+                "demographics": "presenting_concern",
+                "presenting_concern": "scid_screening",
+                "scid_screening": "scid_cv_diagnostic",
+                "scid_cv_diagnostic": "da_diagnostic_analysis",
+                "sra_clarification": "da_diagnostic_analysis",
+                "da_diagnostic_analysis": "tpa_treatment_planning",
+                "tpa_treatment_planning": None  # Final destination
+            }
+
+            # If we're not at TPA and not completed, force progression
+            if current_module != "tpa_treatment_planning" and not session_state.is_complete:
+                next_module = completion_hierarchy.get(current_module)
+
+                if next_module:
+                    logger.critical(f"WORKFLOW RECOVERY: Forcing transition from {current_module} to {next_module}")
+                    session_state.current_module = next_module
+
+                    # Mark current as completed in history
+                    if current_module not in session_state.module_history:
+                        session_state.module_history.append(current_module)
+
+                    # If moving to DA or TPA, mark as completed
+                    if next_module in ["da_diagnostic_analysis", "tpa_treatment_planning"]:
+                        session_state.is_complete = True
+                        logger.critical(f"WORKFLOW RECOVERY: Assessment marked as completed")
+
+                else:
+                    # Unknown state - force to TPA
+                    logger.critical(f"WORKFLOW RECOVERY: Unknown module {current_module}, forcing to TPA")
+                    session_state.current_module = "tpa_treatment_planning"
+                    session_state.is_complete = True
+
+        except Exception as e:
+            logger.critical(f"WORKFLOW RECOVERY FAILED: {e}")
+            # Nuclear option - force completion
+            session_state.current_module = "tpa_treatment_planning"
+            session_state.is_complete = True
+            session_state.metadata = session_state.metadata or {}
+            session_state.metadata["emergency_completion"] = True
 

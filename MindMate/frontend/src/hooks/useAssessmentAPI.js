@@ -197,7 +197,7 @@ export const useAssessmentAPI = () => {
       return {
         ...data,
         normalized_session: normalized,
-        greeting: data.message || 'Hello! Welcome to your assessment. Let\'s begin with some basic information.',
+        greeting: data.message || 'Hello! Welcome to MindMate\'s comprehensive mental health assessment. Let\'s begin your journey to better mental wellness together!',
       };
     } catch (err) {
       handleError(err);

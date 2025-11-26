@@ -91,20 +91,6 @@ class AssessmentFallbackSystem:
                 "response_keys": ["main_concern", "onset_date", "impact_on_functioning", "past_history", "assessment_goals", "severity_rating"]
             },
             {
-                "id": "risk_assessment",
-                "name": "Risk Assessment",
-                "description": "Safety and suicide risk evaluation",
-                "estimated_duration": 300,  # 5 minutes
-                "questions": [
-                    "Have you had thoughts of harming yourself or suicide in the past month?",
-                    "Do you have access to means of self-harm (weapons, medications, etc.)?",
-                    "Have you made any suicide attempts in the past?",
-                    "Have you had thoughts of harming others recently?",
-                    "On a scale of 1-10, how would you rate your current safety (10 being completely safe)?"
-                ],
-                "response_keys": ["suicidal_ideation", "access_to_means", "past_attempts", "harm_to_others", "safety_rating"]
-            },
-            {
                 "id": "mood_anxiety_screening",
                 "name": "Mood & Anxiety",
                 "description": "Key mood and anxiety symptoms",
